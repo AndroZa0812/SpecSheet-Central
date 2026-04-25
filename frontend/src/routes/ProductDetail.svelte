@@ -1,16 +1,15 @@
 <script>
+  import { onMount } from 'svelte'
   import api from '../lib/api.js'
   import { cart } from '../lib/stores.js'
+  import { navigate } from '../lib/router.js'
   import { formatPrice, getStockStatus, getStockClass } from '../lib/utils.js'
-  import { navigate } from 'svelte-routing'
 
-  export let params = {}
-  let product = null
-  let loading = true
+  let { params } = $props()
+  let product = $state(null)
+  let loading = $state(true)
 
-  $: if (params.id) {
-    fetchProduct(params.id)
-  }
+  onMount(() => fetchProduct(params.id))
 
   async function fetchProduct(id) {
     loading = true
@@ -31,7 +30,7 @@
   {:else if !product}
     <p>Product not found.</p>
   {:else}
-    <button on:click={() => navigate('/products')} class="back-btn">&larr; Back to Catalog</button>
+    <button onclick={() => navigate('/products')} class="back-btn">&larr; Back to Catalog</button>
     <div class="product-detail">
       <div class="detail-image">
         {#if product.imageUrl}
@@ -48,7 +47,7 @@
         <p class="stock {getStockClass(product.stockQuantity)}">
           {getStockStatus(product.stockQuantity)}
         </p>
-        <button on:click={() => cart.add(product)} class="add-btn">Add to Cart</button>
+        <button onclick={() => cart.add(product)} class="add-btn">Add to Cart</button>
 
         {#if product.datasheetUrl}
           <a href={product.datasheetUrl} target="_blank" class="datasheet-link">View Datasheet</a>

@@ -1,20 +1,24 @@
 <script>
+  import { onMount } from 'svelte'
   import api from '../lib/api.js'
   import { auth } from '../lib/stores.js'
-  import { navigate } from 'svelte-routing'
+  import { navigate } from '../lib/router.js'
   import ProductFormModal from '../components/ProductFormModal.svelte'
 
-  let activeTab = 'products'
-  let products = []
-  let categories = []
-  let orders = []
-  let loading = true
-  let showModal = false
-  let editingProduct = null
+  let activeTab = $state('products')
+  let products = $state([])
+  let categories = $state([])
+  let orders = $state([])
+  let loading = $state(true)
+  let showModal = $state(false)
+  let editingProduct = $state(null)
 
-  $: if (!$auth || $auth.role !== 'ADMIN') {
-    navigate('/')
-  }
+  onMount(() => {
+    if (!$auth || $auth.role !== 'ADMIN') {
+      navigate('/')
+    }
+    loadData()
+  })
 
   async function loadData() {
     loading = true
@@ -37,8 +41,6 @@
     }
   }
 
-  $: loadData()
-
   function openCreate() {
     editingProduct = null
     showModal = true
@@ -49,18 +51,9 @@
     showModal = true
   }
 
-  async function handleSave(productData) {
-    try {
-      if (editingProduct) {
-        await api.put(`/products/${editingProduct.id}`, productData)
-      } else {
-        await api.post('/products', productData)
-      }
-      showModal = false
-      loadData()
-    } catch (e) {
-      alert('Failed to save product: ' + (e.response?.data?.message || e.message))
-    }
+  async function handleSave() {
+    showModal = false
+    loadData()
   }
 
   async function handleDelete(id) {
@@ -93,12 +86,12 @@
   <h1>Admin Panel</h1>
 
   <div class="tabs">
-    <button class:active={activeTab === 'products'} on:click={() => activeTab = 'products'}>Products</button>
-    <button class:active={activeTab === 'orders'} on:click={() => activeTab = 'orders'}>Orders</button>
+    <button class:active={activeTab === 'products'} onclick={() => { activeTab = 'products'; loadData() }}>Products</button>
+    <button class:active={activeTab === 'orders'} onclick={() => { activeTab = 'orders'; loadData() }}>Orders</button>
   </div>
 
   {#if activeTab === 'products'}
-    <button on:click={openCreate} class="create-btn">+ Add Product</button>
+    <button onclick={openCreate} class="create-btn">+ Add Product</button>
 
     {#if loading}
       <p>Loading...</p>
@@ -124,14 +117,14 @@
                 <input
                   type="number"
                   value={product.stockQuantity}
-                  on:change={(e) => updateStock(product.id, parseInt(e.target.value))}
+                  onchange={(e) => updateStock(product.id, parseInt(e.target.value))}
                   class="stock-input"
                 />
               </td>
               <td>{product.categoryName}</td>
               <td class="actions">
-                <button on:click={() => openEdit(product)} class="edit-btn">Edit</button>
-                <button on:click={() => handleDelete(product.id)} class="delete-btn">Delete</button>
+                <button onclick={() => openEdit(product)} class="edit-btn">Edit</button>
+                <button onclick={() => handleDelete(product.id)} class="delete-btn">Delete</button>
               </td>
             </tr>
           {/each}
@@ -164,7 +157,7 @@
               <td>${order.totalAmount.toFixed(2)}</td>
               <td>{order.status}</td>
               <td>
-                <select on:change={(e) => updateOrderStatus(order.id, e.target.value)} value={order.status}>
+                <select onchange={(e) => updateOrderStatus(order.id, e.target.value)} value={order.status}>
                   <option value="PENDING">PENDING</option>
                   <option value="IN_DELIVERY">IN_DELIVERY</option>
                   <option value="DELIVERED">DELIVERED</option>
@@ -183,8 +176,8 @@
   <ProductFormModal
     product={editingProduct}
     categories={categories}
-    onSave={handleSave}
-    onClose={() => showModal = false}
+    onsave={handleSave}
+    onclose={() => showModal = false}
   />
 {/if}
 

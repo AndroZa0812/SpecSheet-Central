@@ -1,9 +1,9 @@
 <script>
   import { onMount } from 'svelte'
-  import { Link } from 'svelte-routing'
+  import Link from '../components/Link.svelte'
   import api from '../lib/api.js'
 
-  let categories = []
+  let categories = $state([])
 
   onMount(async () => {
     const res = await api.get('/categories')

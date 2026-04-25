@@ -1,18 +1,19 @@
 <script>
+  import { onMount } from 'svelte'
   import api from '../lib/api.js'
   import { formatPrice } from '../lib/utils.js'
 
-  let selectedIds = []
-  let products = []
-  let categories = []
-  let loading = false
+  let selectedIds = $state([])
+  let products = $state([])
+  let categories = $state([])
+  let loading = $state(false)
 
-  async function loadCategories() {
-    try {
-      const res = await api.get('/categories')
-      categories = res.data
-    } catch (e) { /* ignore */ }
-  }
+  let allSpecKeys = $derived([...new Set(products.flatMap(p => Object.keys(p.specs || {})))])
+
+  onMount(async () => {
+    const res = await api.get('/categories')
+    categories = res.data
+  })
 
   async function loadProducts() {
     if (selectedIds.length === 0) {
@@ -44,16 +45,12 @@
     loadProducts()
   }
 
-  $: loadCategories()
-
-  let inputId = ''
+  let inputId = $state('')
   function handleAdd() {
     const id = parseInt(inputId)
     if (id) addProduct(id)
     inputId = ''
   }
-
-  $: allSpecKeys = [...new Set(products.flatMap(p => Object.keys(p.specs || {})))]
 </script>
 
 <div class="compare-page">
@@ -61,7 +58,7 @@
 
   <div class="add-controls">
     <input type="number" bind:value={inputId} placeholder="Enter Product ID" />
-    <button on:click={handleAdd}>Add</button>
+    <button onclick={handleAdd}>Add</button>
   </div>
 
   {#if loading}
@@ -77,7 +74,7 @@
             {#each products as product}
               <th>
                 {product.name}
-                <button on:click={() => removeProduct(product.id)} class="remove-btn">&times;</button>
+                <button onclick={() => removeProduct(product.id)} class="remove-btn">&times;</button>
               </th>
             {/each}
           </tr>

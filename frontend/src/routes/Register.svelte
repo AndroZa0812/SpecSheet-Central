@@ -1,13 +1,14 @@
 <script>
   import api from '../lib/api.js'
   import { auth } from '../lib/stores.js'
-  import { navigate } from 'svelte-routing'
+  import { navigate } from '../lib/router.js'
 
-  let email = ''
-  let password = ''
-  let error = ''
+  let email = $state('')
+  let password = $state('')
+  let error = $state('')
 
-  async function handleSubmit() {
+  async function handleSubmit(e) {
+    e.preventDefault()
     try {
       const res = await api.post('/auth/register', { email, password })
       auth.login({ email: res.data.email, role: res.data.role }, res.data.token)
@@ -21,7 +22,7 @@
 <div class="auth-page">
   <div class="auth-card">
     <h1>Register</h1>
-    <form on:submit|preventDefault={handleSubmit}>
+    <form onsubmit={handleSubmit}>
       {#if error}<p class="error">{error}</p>{/if}
       <input type="email" placeholder="Email" bind:value={email} required />
       <input type="password" placeholder="Password" bind:value={password} required />

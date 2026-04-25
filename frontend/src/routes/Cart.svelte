@@ -1,17 +1,14 @@
 <script>
   import { cart, auth } from '../lib/stores.js'
   import { formatPrice } from '../lib/utils.js'
-  import { navigate } from 'svelte-routing'
+  import { navigate } from '../lib/router.js'
   import api from '../lib/api.js'
 
-  let error = ''
-  let ordering = false
-  let orderSuccess = false
-  let total = 0
+  let error = $state('')
+  let ordering = $state(false)
+  let orderSuccess = $state(false)
 
-  $: {
-    total = $cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  }
+  let total = $derived($cart.reduce((sum, item) => sum + item.price * item.quantity, 0))
 
   async function placeOrder() {
     if (!$auth) {
@@ -51,14 +48,14 @@
             <p class="price">{formatPrice(item.price)}</p>
           </div>
           <div class="item-quantity">
-            <button on:click={() => cart.updateQuantity(item.id, item.quantity - 1)}>-</button>
+            <button onclick={() => cart.updateQuantity(item.id, item.quantity - 1)}>-</button>
             <span>{item.quantity}</span>
-            <button on:click={() => cart.updateQuantity(item.id, item.quantity + 1)}>+</button>
+            <button onclick={() => cart.updateQuantity(item.id, item.quantity + 1)}>+</button>
           </div>
           <div class="item-total">
             {formatPrice(item.price * item.quantity)}
           </div>
-          <button on:click={() => cart.remove(item.id)} class="remove-btn">&times;</button>
+          <button onclick={() => cart.remove(item.id)} class="remove-btn">&times;</button>
         </div>
       {/each}
     </div>
@@ -66,7 +63,7 @@
     <div class="cart-summary">
       <p class="total">Total: <strong>{formatPrice(total)}</strong></p>
       {#if error}<p class="error">{error}</p>{/if}
-      <button on:click={placeOrder} disabled={ordering} class="order-btn">
+      <button onclick={placeOrder} disabled={ordering} class="order-btn">
         {ordering ? 'Placing Order...' : 'Place Order'}
       </button>
     </div>

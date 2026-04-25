@@ -1,14 +1,10 @@
 <script>
-  import { createEventDispatcher, onMount } from 'svelte'
+  import { onMount } from 'svelte'
   import api from '../lib/api.js'
 
-  export let product = null
-  export let categories = []
-  export let onClose = () => {}
+  let { product, categories, onsave, onclose } = $props()
 
-  const dispatch = createEventDispatcher()
-
-  let form = {
+  let form = $state({
     name: '',
     sku: '',
     price: '',
@@ -18,7 +14,7 @@
     imageUrl: '',
     datasheetUrl: '',
     specs: []
-  }
+  })
 
   onMount(() => {
     if (product) {
@@ -27,7 +23,7 @@
         sku: product.sku,
         price: String(product.price),
         stockQuantity: String(product.stockQuantity),
-        categoryId: String(product.categoryId || product.categoryName ? '' : ''),
+        categoryId: String(product.categoryId || ''),
         manufacturer: product.manufacturer || '',
         imageUrl: product.imageUrl || '',
         datasheetUrl: product.datasheetUrl || '',
@@ -45,7 +41,8 @@
     form.specs = [...form.specs]
   }
 
-  async function handleSubmit() {
+  async function handleSubmit(e) {
+    e.preventDefault()
     const data = {
       name: form.name,
       sku: form.sku,
@@ -64,22 +61,21 @@
       } else {
         await api.post('/products', data)
       }
-      dispatch('save')
-      onClose()
+      onsave()
     } catch (e) {
       alert(e.response?.data?.message || 'Save failed')
     }
   }
 </script>
 
-<div class="modal-backdrop" on:click={onClose}>
-  <div class="modal" on:click|stopPropagation>
+<div class="modal-backdrop" onclick={onclose}>
+  <div class="modal" onclick={(e) => e.stopPropagation()}>
     <div class="modal-header">
       <h2>{product ? 'Edit Product' : 'Add Product'}</h2>
-      <button class="btn-close" on:click={onClose}>×</button>
+      <button class="btn-close" onclick={onclose}>×</button>
     </div>
 
-    <form on:submit|preventDefault={handleSubmit} class="modal-body">
+    <form onsubmit={handleSubmit} class="modal-body">
       <div class="form-grid">
         <label>
           Name
@@ -123,19 +119,19 @@
       <div class="specs-section">
         <div class="specs-header">
           <h3>Technical Specifications</h3>
-          <button type="button" class="btn-add-spec" on:click={addSpec}>+ Add Spec</button>
+          <button type="button" class="btn-add-spec" onclick={addSpec}>+ Add Spec</button>
         </div>
         {#each form.specs as spec, i}
           <div class="spec-row">
             <input type="text" placeholder="Key" bind:value={spec.key} />
             <input type="text" placeholder="Value" bind:value={spec.value} />
-            <button type="button" class="btn-remove-spec" on:click={() => removeSpec(i)}>×</button>
+            <button type="button" class="btn-remove-spec" onclick={() => removeSpec(i)}>×</button>
           </div>
         {/each}
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-cancel" on:click={onClose}>Cancel</button>
+        <button type="button" class="btn btn-cancel" onclick={onclose}>Cancel</button>
         <button type="submit" class="btn btn-primary">Save Product</button>
       </div>
     </form>

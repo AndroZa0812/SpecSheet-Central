@@ -1,19 +1,16 @@
 <script>
-  import { Link } from 'svelte-routing'
+  import { navigate } from '../lib/router.js'
+  import Link from './Link.svelte'
   import { auth, cart } from '../lib/stores.js'
-  import { navigate } from 'svelte-routing'
 
-  let cartCount = 0
-  cart.subscribe(items => {
-    cartCount = items.reduce((sum, i) => sum + i.quantity, 0)
-  })
+  let cartCount = $derived($cart.reduce((sum, i) => sum + i.quantity, 0))
 
   function handleLogout() {
     auth.logout()
     navigate('/')
   }
 
-  let searchQuery = ''
+  let searchQuery = $state('')
   function handleSearch(e) {
     if (e.key === 'Enter' && searchQuery.trim()) {
       navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`)
@@ -43,14 +40,14 @@
       type="text"
       placeholder="Search for components..."
       bind:value={searchQuery}
-      on:keydown={handleSearch}
+      onkeydown={handleSearch}
     />
   </div>
 
   <div class="nav-actions">
     {#if $auth}
       <span class="user-email">{$auth.email}</span>
-      <button on:click={handleLogout} class="btn-link">Logout</button>
+      <button onclick={handleLogout} class="btn-link">Logout</button>
     {:else}
       <Link to="/login">Login</Link>
       <Link to="/register">Register</Link>

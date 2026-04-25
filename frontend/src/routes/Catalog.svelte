@@ -1,19 +1,17 @@
 <script>
+  import { onMount } from 'svelte'
   import api from '../lib/api.js'
-  import { Link } from 'svelte-routing'
   import { cart } from '../lib/stores.js'
+  import { query } from '../lib/router.js'
+  import Link from '../components/Link.svelte'
   import { formatPrice, getStockStatus, getStockClass } from '../lib/utils.js'
 
-  let products = []
-  let categories = []
-  let loading = true
-  let search = ''
-  let selectedCategory = ''
-  let selectedManufacturer = ''
-
-  $: {
-    fetchProducts()
-  }
+  let products = $state([])
+  let categories = $state([])
+  let loading = $state(true)
+  let search = $state('')
+  let selectedCategory = $state('')
+  let selectedManufacturer = $state('')
 
   async function fetchProducts() {
     loading = true
@@ -35,23 +33,20 @@
     }
   }
 
-  function getCategoryName(catName) {
-    const cat = categories.find(c => c.name === catName)
-    return cat?.name || catName
-  }
+  onMount(fetchProducts)
 </script>
 
 <div class="catalog">
   <aside class="filters">
     <h3>Filters</h3>
-    <input type="text" placeholder="Search..." bind:value={search} on:input={fetchProducts} />
-    <select bind:value={selectedCategory} on:change={fetchProducts}>
+    <input type="text" placeholder="Search..." bind:value={search} oninput={fetchProducts} />
+    <select bind:value={selectedCategory} onchange={fetchProducts}>
       <option value="">All Categories</option>
       {#each categories as cat}
         <option value={cat.id}>{cat.name}</option>
       {/each}
     </select>
-    <select bind:value={selectedManufacturer} on:change={fetchProducts}>
+    <select bind:value={selectedManufacturer} onchange={fetchProducts}>
       <option value="">All Manufacturers</option>
       {#each [...new Set(products.map(p => p.manufacturer).filter(Boolean))] as mfr}
         <option value={mfr}>{mfr}</option>
@@ -84,7 +79,7 @@
               </p>
             </div>
           </Link>
-          <button on:click={() => cart.add(product)} class="add-btn">
+          <button onclick={() => cart.add(product)} class="add-btn">
             Add to Cart
           </button>
         </div>
