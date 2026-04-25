@@ -13,3 +13,8 @@ uploads/
 .worktrees/
 .vscode/
 .svelte-kit/
+
+# Agent config
+opencode.json
+skills-lock.json
+.agents
