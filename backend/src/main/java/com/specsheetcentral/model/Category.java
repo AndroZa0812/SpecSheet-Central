@@ -1,5 +1,6 @@
 package com.specsheetcentral.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.util.List;
 
@@ -14,6 +15,7 @@ public class Category {
     private String name;
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("category")
     private List<Product> products;
 
     public Long getId() { return id; }

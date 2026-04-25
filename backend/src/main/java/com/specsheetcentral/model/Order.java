@@ -1,5 +1,6 @@
 package com.specsheetcentral.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ public class Order {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnoreProperties("orders")
     private User user;
 
     @Column(nullable = false)
@@ -27,6 +29,7 @@ public class Order {
     private Status status;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("order")
     private List<OrderItem> items = new ArrayList<>();
 
     public enum Status {

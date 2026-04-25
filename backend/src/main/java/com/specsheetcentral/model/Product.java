@@ -1,5 +1,6 @@
 package com.specsheetcentral.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.util.List;
 
@@ -24,6 +25,7 @@ public class Product {
 
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
+    @JsonIgnoreProperties("products")
     private Category category;
 
     @Column
@@ -36,6 +38,7 @@ public class Product {
     private String datasheetUrl;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("product")
     private List<ProductSpec> specs;
 
     public Long getId() { return id; }

@@ -1,5 +1,6 @@
 package com.specsheetcentral.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 @Entity
@@ -11,6 +12,7 @@ public class ProductSpec {
 
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
+    @JsonIgnoreProperties({"specs", "category"})
     private Product product;
 
     @Column(nullable = false)
