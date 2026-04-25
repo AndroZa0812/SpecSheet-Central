@@ -12,3 +12,4 @@ uploads/
 *.log
 .worktrees/
 .vscode/
+.svelte-kit/
