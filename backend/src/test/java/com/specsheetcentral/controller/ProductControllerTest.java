@@ -1,122 +1,158 @@
 package com.specsheetcentral.controller;
 
-import com.specsheetcentral.dto.ProductRequest;
-import com.specsheetcentral.dto.ProductResponse;
-import com.specsheetcentral.security.CustomUserDetailsService;
-import com.specsheetcentral.security.JwtService;
-import com.specsheetcentral.service.ProductService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.specsheetcentral.dto.ProductRequest;
+import com.specsheetcentral.model.Category;
+import com.specsheetcentral.repository.CategoryRepository;
+import com.specsheetcentral.repository.ProductRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
-import java.util.List;
-import java.util.Map;
-
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(ProductController.class)
+@SpringBootTest
 @ActiveProfiles("test")
-@SuppressWarnings("deprecation")
 class ProductControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private WebApplicationContext context;
 
-    @MockBean
-    private ProductService productService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @MockBean
-    private JwtService jwtService;
+    @Autowired
+    private CategoryRepository categoryRepository;
 
-    @MockBean
-    private CustomUserDetailsService customUserDetailsService;
+    @Autowired
+    private ProductRepository productRepository;
+
+    private Category category;
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
+        productRepository.deleteAll();
+        categoryRepository.deleteAll();
+
+        category = new Category();
+        category.setName("Microcontrollers");
+        category = categoryRepository.save(category);
+    }
 
     @Test
     void getAllShouldReturnProducts() throws Exception {
-        ProductResponse resp = new ProductResponse();
-        resp.setId(1L);
-        resp.setName("Arduino Uno");
-        resp.setSku("ARD-UNO");
-        resp.setPrice(24.99);
-        resp.setStockQuantity(10);
-        resp.setCategoryName("Microcontrollers");
-
-        when(productService.findAll(any(), any(), any(), any(), any())).thenReturn(List.of(resp));
-
-        mockMvc.perform(get("/api/products"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].name").value("Arduino Uno"));
-    }
-
-    @Test
-    void getByIdShouldReturnProduct() throws Exception {
-        ProductResponse resp = new ProductResponse();
-        resp.setId(1L);
-        resp.setName("Arduino Uno");
-
-        when(productService.findById(1L)).thenReturn(resp);
-
-        mockMvc.perform(get("/api/products/1"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.name").value("Arduino Uno"));
-    }
-
-    @Test
-    void createShouldReturnCreatedProduct() throws Exception {
-        ProductResponse resp = new ProductResponse();
-        resp.setId(1L);
-        resp.setName("Arduino Uno");
-        resp.setSku("ARD-UNO");
-        resp.setPrice(24.99);
-        resp.setStockQuantity(10);
-        resp.setCategoryName("Microcontrollers");
-
-        when(productService.create(any(ProductRequest.class))).thenReturn(resp);
-
         ProductRequest request = new ProductRequest();
         request.setName("Arduino Uno");
         request.setSku("ARD-UNO");
         request.setPrice(24.99);
         request.setStockQuantity(10);
-        request.setCategoryId(1L);
+        request.setCategoryId(category.getId());
 
         mockMvc.perform(post("/api/products")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.name").value("Arduino Uno"));
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Arduino Uno"));
+
+        mockMvc.perform(get("/api/products"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].name").value("Arduino Uno"));
     }
 
     @Test
     void deleteShouldReturnNoContent() throws Exception {
-        doNothing().when(productService).delete(1L);
+        ProductRequest request = new ProductRequest();
+        request.setName("Delete Me");
+        request.setSku("DEL-001");
+        request.setPrice(10.00);
+        request.setStockQuantity(5);
+        request.setCategoryId(category.getId());
 
-        mockMvc.perform(delete("/api/products/1"))
-            .andExpect(status().isNoContent());
+        String json = mockMvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        Long id = objectMapper.readTree(json).get("id").asLong();
+
+        mockMvc.perform(delete("/api/products/{id}", id))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void createShouldReturnCreatedProduct() throws Exception {
+        ProductRequest request = new ProductRequest();
+        request.setName("Arduino Uno");
+        request.setSku("ARD-UNO-R3");
+        request.setPrice(24.99);
+        request.setStockQuantity(10);
+        request.setCategoryId(category.getId());
+        request.setManufacturer("Arduino");
+
+        mockMvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Arduino Uno"))
+                .andExpect(jsonPath("$.sku").value("ARD-UNO-R3"))
+                .andExpect(jsonPath("$.price").value(24.99));
     }
 
     @Test
     void updateStockShouldReturnUpdatedProduct() throws Exception {
-        ProductResponse resp = new ProductResponse();
-        resp.setId(1L);
-        resp.setStockQuantity(25);
+        ProductRequest request = new ProductRequest();
+        request.setName("Stock ITem");
+        request.setSku("STK-001");
+        request.setPrice(15.00);
+        request.setStockQuantity(5);
+        request.setCategoryId(category.getId());
 
-        when(productService.updateStock(eq(1L), eq(25))).thenReturn(resp);
+        String json = mockMvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
 
-        mockMvc.perform(patch("/api/products/1/stock?quantity=25"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.stockQuantity").value(25));
+        Long id = objectMapper.readTree(json).get("id").asLong();
+
+        mockMvc.perform(patch("/api/products/{id}/stock", id)
+                        .param("quantity", "25"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stockQuantity").value(25));
+    }
+
+    @Test
+    void getByIdShouldReturnProduct() throws Exception {
+        ProductRequest request = new ProductRequest();
+        request.setName("Find Me");
+        request.setSku("FND-001");
+        request.setPrice(99.99);
+        request.setStockQuantity(1);
+        request.setCategoryId(category.getId());
+
+        String json = mockMvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        Long id = objectMapper.readTree(json).get("id").asLong();
+
+        mockMvc.perform(get("/api/products/{id}", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Find Me"));
     }
 }

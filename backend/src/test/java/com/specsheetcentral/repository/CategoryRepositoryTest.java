@@ -3,12 +3,12 @@ package com.specsheetcentral.repository;
 import com.specsheetcentral.model.Category;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
+@SpringBootTest
 @ActiveProfiles("test")
 class CategoryRepositoryTest {
 
@@ -26,10 +26,14 @@ class CategoryRepositoryTest {
 
         Category found = categoryRepository.findById(saved.getId()).orElseThrow();
         assertThat(found.getName()).isEqualTo("Microcontrollers");
+
+        categoryRepository.deleteAll();
     }
 
     @Test
     void shouldFindAllCategories() {
+        categoryRepository.deleteAll();
+
         Category cat1 = new Category();
         cat1.setName("Microcontrollers");
         categoryRepository.save(cat1);
@@ -39,15 +43,21 @@ class CategoryRepositoryTest {
         categoryRepository.save(cat2);
 
         assertThat(categoryRepository.findAll()).hasSize(2);
+
+        categoryRepository.deleteAll();
     }
 
     @Test
     void shouldDeleteCategory() {
+        categoryRepository.deleteAll();
+
         Category cat = new Category();
         cat.setName("Displays");
         Category saved = categoryRepository.save(cat);
 
         categoryRepository.deleteById(saved.getId());
         assertThat(categoryRepository.findById(saved.getId())).isNotPresent();
+
+        categoryRepository.deleteAll();
     }
 }
