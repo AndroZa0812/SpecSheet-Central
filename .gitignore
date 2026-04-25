@@ -1,0 +1,12 @@
+.m2/
+target/
+*.class
+*.jar
+*.war
+.idea/
+*.iml
+node_modules/
+dist/
+uploads/
+.env
+*.log
