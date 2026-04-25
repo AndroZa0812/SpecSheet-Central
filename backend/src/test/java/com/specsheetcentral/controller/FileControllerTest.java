@@ -18,6 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(FileController.class)
 @ActiveProfiles("test")
+@SuppressWarnings("deprecation")
 class FileControllerTest {
 
     @Autowired

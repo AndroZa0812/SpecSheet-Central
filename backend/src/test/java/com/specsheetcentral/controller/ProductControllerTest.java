@@ -25,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(ProductController.class)
 @ActiveProfiles("test")
+@SuppressWarnings("deprecation")
 class ProductControllerTest {
 
     @Autowired
