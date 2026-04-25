@@ -1,19 +1,21 @@
-<script>
-  import { navigate } from '../lib/router.js'
-  import Link from './Link.svelte'
-  import { auth, cart } from '../lib/stores.js'
+<script lang="ts">
+  import { navigate } from "../lib/router.js";
+  import Link from "./Link.svelte";
+  import { auth, cart } from "../lib/stores.js";
 
-  let cartCount = $derived($cart.reduce((sum, i) => sum + i.quantity, 0))
+  let cartCount = $derived($cart.reduce((sum: number, i) => sum + i.quantity, 0));
 
   function handleLogout() {
-    auth.logout()
-    navigate('/')
+    auth.logout();
+    navigate("/");
   }
 
-  let searchQuery = $state('')
-  function handleSearch(e) {
-    if (e.key === 'Enter' && searchQuery.trim()) {
-      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`)
+  let searchQuery = $state("");
+
+  function handleSearch(e: KeyboardEvent) {
+    const input = e.target as HTMLInputElement;
+    if (e.key === "Enter" && input.value.trim()) {
+      navigate(`/products?search=${encodeURIComponent(input.value.trim())}`);
     }
   }
 </script>
@@ -30,7 +32,7 @@
     <Link to="/">Home</Link>
     <Link to="/products">Products</Link>
     <Link to="/compare">Compare</Link>
-    {#if $auth?.role === 'ADMIN'}
+    {#if $auth?.role === "ADMIN"}
       <Link to="/admin">Admin</Link>
     {/if}
   </div>

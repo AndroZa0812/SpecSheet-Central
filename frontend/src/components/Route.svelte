@@ -1,8 +1,9 @@
-<script>
-  import { currentPath, match } from '../lib/router.js'
+<script lang="ts">
+  import { currentPath, match } from "../lib/router.js";
+  import type { RouteParams } from "../lib/types.js";
 
-  let { path, component: Component, ...rest } = $props()
-  let matched = $derived(match(path, $currentPath.split('?')[0]))
+  let { path, component: Component, ...rest }: { path: string; component: any; [key: string]: any } = $props();
+  let matched: RouteParams | null = $derived(match(path, $currentPath.split("?")[0]));
 </script>
 
 {#if matched}

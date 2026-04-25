@@ -1,39 +1,39 @@
-<script>
-  import { onMount } from 'svelte'
-  import api from '../lib/api.js'
-  import { cart } from '../lib/stores.js'
-  import { query } from '../lib/router.js'
-  import Link from '../components/Link.svelte'
-  import { formatPrice, getStockStatus, getStockClass } from '../lib/utils.js'
+<script lang="ts">
+  import { onMount } from "svelte";
+  import api from "../lib/api.js";
+  import { cart } from "../lib/stores.js";
+  import Link from "../components/Link.svelte";
+  import { formatPrice, getStockStatus, getStockClass } from "../lib/utils.js";
+  import type { ProductResponse, Category } from "../lib/types.js";
 
-  let products = $state([])
-  let categories = $state([])
-  let loading = $state(true)
-  let search = $state('')
-  let selectedCategory = $state('')
-  let selectedManufacturer = $state('')
+  let products: ProductResponse[] = $state([]);
+  let categories: Category[] = $state([]);
+  let loading = $state(true);
+  let search = $state("");
+  let selectedCategory = $state("");
+  let selectedManufacturer = $state("");
 
   async function fetchProducts() {
-    loading = true
+    loading = true;
     try {
-      const params = {}
-      if (search) params.search = search
-      if (selectedCategory) params.categoryId = selectedCategory
-      if (selectedManufacturer) params.manufacturer = selectedManufacturer
+      const params: Record<string, string> = {};
+      if (search) params.search = search;
+      if (selectedCategory) params.categoryId = selectedCategory;
+      if (selectedManufacturer) params.manufacturer = selectedManufacturer;
       const [prodRes, catRes] = await Promise.all([
-        api.get('/products', { params }),
-        api.get('/categories')
-      ])
-      products = prodRes.data
-      categories = catRes.data
+        api.get<ProductResponse[]>("/products", { params }),
+        api.get<Category[]>("/categories"),
+      ]);
+      products = prodRes.data;
+      categories = catRes.data;
     } catch (e) {
-      console.error('Failed to load products', e)
+      console.error("Failed to load products", e);
     } finally {
-      loading = false
+      loading = false;
     }
   }
 
-  onMount(fetchProducts)
+  onMount(fetchProducts);
 </script>
 
 <div class="catalog">
@@ -79,7 +79,7 @@
               </p>
             </div>
           </Link>
-          <button onclick={() => cart.add(product)} class="add-btn">
+          <button onclick={() => cart.add(product as any)} class="add-btn">
             Add to Cart
           </button>
         </div>
@@ -108,9 +108,6 @@
   .stock.in { color: var(--success); }
   .stock.low { color: var(--warning); }
   .stock.out { color: var(--danger); }
-  .add-btn {
-    width: 100%; padding: 0.6rem; background: var(--primary); color: white;
-    border: none; cursor: pointer; font-size: 0.9rem;
-  }
+  .add-btn { width: 100%; padding: 0.6rem; background: var(--primary); color: white; border: none; cursor: pointer; font-size: 0.9rem; }
   .add-btn:hover { background: var(--primary-dark); }
 </style>

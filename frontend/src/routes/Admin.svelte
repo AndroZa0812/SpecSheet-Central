@@ -1,83 +1,84 @@
-<script>
-  import { onMount } from 'svelte'
-  import api from '../lib/api.js'
-  import { auth } from '../lib/stores.js'
-  import { navigate } from '../lib/router.js'
-  import ProductFormModal from '../components/ProductFormModal.svelte'
+<script lang="ts">
+  import { onMount } from "svelte";
+  import api from "../lib/api.js";
+  import { auth } from "../lib/stores.js";
+  import { navigate } from "../lib/router.js";
+  import ProductFormModal from "../components/ProductFormModal.svelte";
+  import type { ProductResponse, Category, OrderResponse } from "../lib/types.js";
 
-  let activeTab = $state('products')
-  let products = $state([])
-  let categories = $state([])
-  let orders = $state([])
-  let loading = $state(true)
-  let showModal = $state(false)
-  let editingProduct = $state(null)
+  let activeTab = $state<"products" | "orders">("products");
+  let products: ProductResponse[] = $state([]);
+  let categories: Category[] = $state([]);
+  let orders: OrderResponse[] = $state([]);
+  let loading = $state(true);
+  let showModal = $state(false);
+  let editingProduct: ProductResponse | null = $state(null);
 
   onMount(() => {
-    if (!$auth || $auth.role !== 'ADMIN') {
-      navigate('/')
+    if (!$auth || $auth.role !== "ADMIN") {
+      navigate("/");
     }
-    loadData()
-  })
+    loadData();
+  });
 
   async function loadData() {
-    loading = true
+    loading = true;
     try {
-      if (activeTab === 'products') {
+      if (activeTab === "products") {
         const [prodRes, catRes] = await Promise.all([
-          api.get('/products'),
-          api.get('/categories')
-        ])
-        products = prodRes.data
-        categories = catRes.data
-      } else if (activeTab === 'orders') {
-        const res = await api.get('/orders')
-        orders = res.data
+          api.get<ProductResponse[]>("/products"),
+          api.get<Category[]>("/categories"),
+        ]);
+        products = prodRes.data;
+        categories = catRes.data;
+      } else if (activeTab === "orders") {
+        const res = await api.get<OrderResponse[]>("/orders");
+        orders = res.data;
       }
     } catch (e) {
-      console.error('Failed to load admin data', e)
+      console.error("Failed to load admin data", e);
     } finally {
-      loading = false
+      loading = false;
     }
   }
 
   function openCreate() {
-    editingProduct = null
-    showModal = true
+    editingProduct = null;
+    showModal = true;
   }
 
-  function openEdit(product) {
-    editingProduct = product
-    showModal = true
+  function openEdit(product: ProductResponse) {
+    editingProduct = product;
+    showModal = true;
   }
 
-  async function handleSave() {
-    showModal = false
-    loadData()
+  function handleSave() {
+    showModal = false;
+    loadData();
   }
 
-  async function handleDelete(id) {
-    if (confirm('Delete this product?')) {
-      await api.delete(`/products/${id}`)
-      loadData()
+  async function handleDelete(id: number) {
+    if (confirm("Delete this product?")) {
+      await api.delete(`/products/${id}`);
+      loadData();
     }
   }
 
-  async function updateStock(id, quantity) {
+  async function updateStock(id: number, quantity: number) {
     try {
-      await api.patch(`/products/${id}/stock`, null, { params: { quantity } })
-      loadData()
+      await api.patch(`/products/${id}/stock`, null, { params: { quantity } });
+      loadData();
     } catch (e) {
-      alert('Failed to update stock')
+      alert("Failed to update stock");
     }
   }
 
-  async function updateOrderStatus(id, status) {
+  async function updateOrderStatus(id: number, status: string) {
     try {
-      await api.patch(`/orders/${id}/status`, null, { params: { status } })
-      loadData()
+      await api.patch(`/orders/${id}/status`, null, { params: { status } });
+      loadData();
     } catch (e) {
-      alert('Failed to update order status')
+      alert("Failed to update order status");
     }
   }
 </script>
@@ -86,11 +87,11 @@
   <h1>Admin Panel</h1>
 
   <div class="tabs">
-    <button class:active={activeTab === 'products'} onclick={() => { activeTab = 'products'; loadData() }}>Products</button>
-    <button class:active={activeTab === 'orders'} onclick={() => { activeTab = 'orders'; loadData() }}>Orders</button>
+    <button class:active={activeTab === "products"} onclick={() => { activeTab = "products"; loadData(); }}>Products</button>
+    <button class:active={activeTab === "orders"} onclick={() => { activeTab = "orders"; loadData(); }}>Orders</button>
   </div>
 
-  {#if activeTab === 'products'}
+  {#if activeTab === "products"}
     <button onclick={openCreate} class="create-btn">+ Add Product</button>
 
     {#if loading}
@@ -117,7 +118,7 @@
                 <input
                   type="number"
                   value={product.stockQuantity}
-                  onchange={(e) => updateStock(product.id, parseInt(e.target.value))}
+                  onchange={(e: Event) => updateStock(product.id, parseInt((e.target as HTMLInputElement).value))}
                   class="stock-input"
                 />
               </td>
@@ -133,7 +134,7 @@
     {/if}
   {/if}
 
-  {#if activeTab === 'orders'}
+  {#if activeTab === "orders"}
     {#if loading}
       <p>Loading...</p>
     {:else}
@@ -157,7 +158,7 @@
               <td>${order.totalAmount.toFixed(2)}</td>
               <td>{order.status}</td>
               <td>
-                <select onchange={(e) => updateOrderStatus(order.id, e.target.value)} value={order.status}>
+                <select onchange={(e: Event) => updateOrderStatus(order.id, (e.target as HTMLSelectElement).value)} value={order.status}>
                   <option value="PENDING">PENDING</option>
                   <option value="IN_DELIVERY">IN_DELIVERY</option>
                   <option value="DELIVERED">DELIVERED</option>

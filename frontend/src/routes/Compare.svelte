@@ -1,55 +1,59 @@
-<script>
-  import { onMount } from 'svelte'
-  import api from '../lib/api.js'
-  import { formatPrice } from '../lib/utils.js'
+<script lang="ts">
+  import { onMount } from "svelte";
+  import api from "../lib/api.js";
+  import { formatPrice } from "../lib/utils.js";
+  import type { ProductResponse, Category } from "../lib/types.js";
 
-  let selectedIds = $state([])
-  let products = $state([])
-  let categories = $state([])
-  let loading = $state(false)
+  let selectedIds: number[] = $state([]);
+  let products: ProductResponse[] = $state([]);
+  let categories: Category[] = $state([]);
+  let loading = $state(false);
 
-  let allSpecKeys = $derived([...new Set(products.flatMap(p => Object.keys(p.specs || {})))])
+  let allSpecKeys = $derived([...new Set(products.flatMap((p) => Object.keys(p.specs || {})))]);
 
   onMount(async () => {
-    const res = await api.get('/categories')
-    categories = res.data
-  })
+    const res = await api.get<Category[]>("/categories");
+    categories = res.data;
+  });
 
   async function loadProducts() {
     if (selectedIds.length === 0) {
-      products = []
-      return
+      products = [];
+      return;
     }
-    loading = true
+    loading = true;
     try {
       const results = await Promise.all(
-        selectedIds.map(id => api.get(`/products/${id}`).catch(() => null))
-      )
-      products = results.filter(Boolean).map(r => r.data)
+        selectedIds.map((id) =>
+          api.get<ProductResponse>(`/products/${id}`).catch(() => null),
+        ),
+      );
+      products = results.filter(Boolean).map((r) => r!.data);
     } catch (e) {
-      console.error('Failed to load products for comparison', e)
+      console.error("Failed to load products for comparison", e);
     } finally {
-      loading = false
+      loading = false;
     }
   }
 
-  function addProduct(id) {
+  function addProduct(id: number) {
     if (!selectedIds.includes(id)) {
-      selectedIds = [...selectedIds, id]
-      loadProducts()
+      selectedIds = [...selectedIds, id];
+      loadProducts();
     }
   }
 
-  function removeProduct(id) {
-    selectedIds = selectedIds.filter(s => s !== id)
-    loadProducts()
+  function removeProduct(id: number) {
+    selectedIds = selectedIds.filter((s) => s !== id);
+    loadProducts();
   }
 
-  let inputId = $state('')
+  let inputId = $state("");
+
   function handleAdd() {
-    const id = parseInt(inputId)
-    if (id) addProduct(id)
-    inputId = ''
+    const id = parseInt(inputId);
+    if (id) addProduct(id);
+    inputId = "";
   }
 </script>
 
@@ -108,7 +112,7 @@
             <tr>
               <td class="label">{key}</td>
               {#each products as product}
-                <td>{product.specs?.[key] || '-'}</td>
+                <td>{product.specs?.[key] || "-"}</td>
               {/each}
             </tr>
           {/each}

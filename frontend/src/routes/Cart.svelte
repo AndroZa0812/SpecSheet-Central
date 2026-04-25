@@ -1,31 +1,32 @@
-<script>
-  import { cart, auth } from '../lib/stores.js'
-  import { formatPrice } from '../lib/utils.js'
-  import { navigate } from '../lib/router.js'
-  import api from '../lib/api.js'
+<script lang="ts">
+  import { cart, auth } from "../lib/stores.js";
+  import { formatPrice } from "../lib/utils.js";
+  import { navigate } from "../lib/router.js";
+  import api from "../lib/api.js";
+  import type { OrderResponse } from "../lib/types.js";
 
-  let error = $state('')
-  let ordering = $state(false)
-  let orderSuccess = $state(false)
+  let error = $state("");
+  let ordering = $state(false);
+  let orderSuccess = $state(false);
 
-  let total = $derived($cart.reduce((sum, item) => sum + item.price * item.quantity, 0))
+  let total = $derived($cart.reduce((sum: number, item) => sum + item.price * item.quantity, 0));
 
   async function placeOrder() {
     if (!$auth) {
-      navigate('/login')
-      return
+      navigate("/login");
+      return;
     }
-    ordering = true
-    error = ''
+    ordering = true;
+    error = "";
     try {
-      const items = $cart.map(i => ({ productId: i.id, quantity: i.quantity }))
-      await api.post('/orders', { items })
-      cart.clear()
-      orderSuccess = true
+      const items = $cart.map((i) => ({ productId: i.id, quantity: i.quantity }));
+      await api.post<OrderResponse>("/orders", { items });
+      cart.clear();
+      orderSuccess = true;
     } catch (e) {
-      error = e.response?.data?.message || 'Order failed. Please try again.'
+      error = (e as any).response?.data?.message || "Order failed. Please try again.";
     } finally {
-      ordering = false
+      ordering = false;
     }
   }
 </script>
@@ -64,7 +65,7 @@
       <p class="total">Total: <strong>{formatPrice(total)}</strong></p>
       {#if error}<p class="error">{error}</p>{/if}
       <button onclick={placeOrder} disabled={ordering} class="order-btn">
-        {ordering ? 'Placing Order...' : 'Place Order'}
+        {ordering ? "Placing Order..." : "Place Order"}
       </button>
     </div>
   {/if}

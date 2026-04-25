@@ -1,12 +1,15 @@
-import { writable } from "svelte/store";
+import { writable, derived } from "svelte/store";
+import type { AuthUser, CartItem } from "./types";
 
 function createAuthStore() {
   const stored = localStorage.getItem("user");
-  const { subscribe, set } = writable(stored ? JSON.parse(stored) : null);
+  const { subscribe, set } = writable<AuthUser | null>(
+    stored ? (JSON.parse(stored) as AuthUser) : null,
+  );
 
   return {
     subscribe,
-    login: (user, token) => {
+    login: (user: AuthUser, token: string) => {
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
       set(user);
@@ -23,13 +26,15 @@ export const auth = createAuthStore();
 
 function createCartStore() {
   const stored = localStorage.getItem("cart");
-  const { subscribe, set, update } = writable(stored ? JSON.parse(stored) : []);
+  const { subscribe, set, update } = writable<CartItem[]>(
+    stored ? (JSON.parse(stored) as CartItem[]) : [],
+  );
 
   return {
     subscribe,
-    add: (product) =>
+    add: (product: CartItem) =>
       update((items) => {
-        const existing = items.find((i) => i.id === product.id);
+        const existing = items.find((i: CartItem) => i.id === product.id);
         if (existing) {
           existing.quantity += 1;
         } else {
@@ -38,19 +43,19 @@ function createCartStore() {
         localStorage.setItem("cart", JSON.stringify(items));
         return [...items];
       }),
-    remove: (productId) =>
+    remove: (productId: number) =>
       update((items) => {
-        const filtered = items.filter((i) => i.id !== productId);
+        const filtered = items.filter((i: CartItem) => i.id !== productId);
         localStorage.setItem("cart", JSON.stringify(filtered));
         return filtered;
       }),
-    updateQuantity: (productId, quantity) =>
+    updateQuantity: (productId: number, quantity: number) =>
       update((items) => {
-        const item = items.find((i) => i.id === productId);
+        const item = items.find((i: CartItem) => i.id === productId);
         if (item) {
           item.quantity = quantity;
           if (quantity <= 0) {
-            return items.filter((i) => i.id !== productId);
+            return items.filter((i: CartItem) => i.id !== productId);
           }
         }
         localStorage.setItem("cart", JSON.stringify(items));

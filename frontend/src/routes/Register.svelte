@@ -1,20 +1,21 @@
-<script>
-  import api from '../lib/api.js'
-  import { auth } from '../lib/stores.js'
-  import { navigate } from '../lib/router.js'
+<script lang="ts">
+  import api from "../lib/api.js";
+  import { auth } from "../lib/stores.js";
+  import { navigate } from "../lib/router.js";
+  import type { AuthResponse } from "../lib/types.js";
 
-  let email = $state('')
-  let password = $state('')
-  let error = $state('')
+  let email = $state("");
+  let password = $state("");
+  let error = $state("");
 
-  async function handleSubmit(e) {
-    e.preventDefault()
+  async function handleSubmit(e: Event) {
+    e.preventDefault();
     try {
-      const res = await api.post('/auth/register', { email, password })
-      auth.login({ email: res.data.email, role: res.data.role }, res.data.token)
-      navigate('/')
+      const res = await api.post<AuthResponse>("/auth/register", { email, password });
+      auth.login({ email: res.data.email, role: res.data.role }, res.data.token);
+      navigate("/");
     } catch (e) {
-      error = e.response?.data?.message || 'Registration failed'
+      error = (e as any).response?.data?.message || "Registration failed";
     }
   }
 </script>

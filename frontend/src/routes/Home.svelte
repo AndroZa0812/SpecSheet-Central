@@ -1,14 +1,15 @@
-<script>
-  import { onMount } from 'svelte'
-  import Link from '../components/Link.svelte'
-  import api from '../lib/api.js'
+<script lang="ts">
+  import { onMount } from "svelte";
+  import Link from "../components/Link.svelte";
+  import api from "../lib/api.js";
+  import type { Category } from "../lib/types.js";
 
-  let categories = $state([])
+  let categories: Category[] = $state([]);
 
   onMount(async () => {
-    const res = await api.get('/categories')
-    categories = res.data
-  })
+    const res = await api.get<Category[]>("/categories");
+    categories = res.data;
+  });
 </script>
 
 <div class="home">
@@ -30,11 +31,11 @@
       {#each categories as category}
         <Link to={`/products?categoryId=${category.id}`} class="category-card">
           <div class="category-icon">
-            {#if category.name === 'Microcontrollers'}
+            {#if category.name === "Microcontrollers"}
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg>
-            {:else if category.name === 'Sensors'}
+            {:else if category.name === "Sensors"}
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-            {:else if category.name === 'LEDs'}
+            {:else if category.name === "LEDs"}
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M9 18h6M10 22h4M12 2v1M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg>
             {:else}
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
@@ -53,10 +54,7 @@
     color: white;
     padding: 4rem 2rem;
   }
-  .hero-content {
-    max-width: 1200px;
-    margin: 0 auto;
-  }
+  .hero-content { max-width: 1200px; margin: 0 auto; }
   .badge {
     display: inline-block;
     background: rgba(255,255,255,0.2);

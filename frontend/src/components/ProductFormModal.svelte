@@ -1,20 +1,26 @@
-<script>
-  import { onMount } from 'svelte'
-  import api from '../lib/api.js'
+<script lang="ts">
+  import { onMount } from "svelte";
+  import api from "../lib/api.js";
+  import type { ProductResponse, Category } from "../lib/types.js";
 
-  let { product, categories, onsave, onclose } = $props()
+  let { product = null, categories = [], onsave, onclose }: {
+    product?: ProductResponse | null;
+    categories?: Category[];
+    onsave: () => void;
+    onclose: () => void;
+  } = $props();
 
   let form = $state({
-    name: '',
-    sku: '',
-    price: '',
-    stockQuantity: '',
-    categoryId: '',
-    manufacturer: '',
-    imageUrl: '',
-    datasheetUrl: '',
-    specs: []
-  })
+    name: "",
+    sku: "",
+    price: "",
+    stockQuantity: "",
+    categoryId: "",
+    manufacturer: "",
+    imageUrl: "",
+    datasheetUrl: "",
+    specs: [] as { key: string; value: string }[],
+  });
 
   onMount(() => {
     if (product) {
@@ -23,26 +29,26 @@
         sku: product.sku,
         price: String(product.price),
         stockQuantity: String(product.stockQuantity),
-        categoryId: String(product.categoryId || ''),
-        manufacturer: product.manufacturer || '',
-        imageUrl: product.imageUrl || '',
-        datasheetUrl: product.datasheetUrl || '',
-        specs: Object.entries(product.specs || {}).map(([k, v]) => ({ key: k, value: v }))
-      }
+        categoryId: String(product.categoryId || ""),
+        manufacturer: product.manufacturer || "",
+        imageUrl: product.imageUrl || "",
+        datasheetUrl: product.datasheetUrl || "",
+        specs: Object.entries(product.specs || {}).map(([k, v]) => ({ key: k, value: v })),
+      };
     }
-  })
+  });
 
   function addSpec() {
-    form.specs = [...form.specs, { key: '', value: '' }]
+    form.specs = [...form.specs, { key: "", value: "" }];
   }
 
-  function removeSpec(index) {
-    form.specs.splice(index, 1)
-    form.specs = [...form.specs]
+  function removeSpec(index: number) {
+    form.specs.splice(index, 1);
+    form.specs = [...form.specs];
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault()
+  async function handleSubmit(e: Event) {
+    e.preventDefault();
     const data = {
       name: form.name,
       sku: form.sku,
@@ -52,18 +58,18 @@
       manufacturer: form.manufacturer,
       imageUrl: form.imageUrl,
       datasheetUrl: form.datasheetUrl,
-      specs: Object.fromEntries(form.specs.filter(s => s.key).map(s => [s.key, s.value]))
-    }
+      specs: Object.fromEntries(form.specs.filter((s) => s.key).map((s) => [s.key, s.value])),
+    };
 
     try {
       if (product) {
-        await api.put(`/products/${product.id}`, data)
+        await api.put(`/products/${product.id}`, data);
       } else {
-        await api.post('/products', data)
+        await api.post("/products", data);
       }
-      onsave()
+      onsave();
     } catch (e) {
-      alert(e.response?.data?.message || 'Save failed')
+      alert((e as any).response?.data?.message || "Save failed");
     }
   }
 </script>
@@ -71,9 +77,9 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="modal-backdrop" onclick={onclose}>
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="modal" onclick={(e) => e.stopPropagation()}>
+  <div class="modal" onclick={(e: MouseEvent) => e.stopPropagation()}>
     <div class="modal-header">
-      <h2>{product ? 'Edit Product' : 'Add Product'}</h2>
+      <h2>{product ? "Edit Product" : "Add Product"}</h2>
       <button class="btn-close" onclick={onclose}>×</button>
     </div>
 
