@@ -16,6 +16,9 @@
     <name>SpecSheet Central</name>
     <properties>
         <java.version>21</java.version>
+        <sonar.organization>${env.SONARQUBE_ORG}</sonar.organization>
+        <sonar.projectKey>specsheet-central</sonar.projectKey>
+        <sonar.host.url>${env.SONARQUBE_CLOUD_URL}</sonar.host.url>
     </properties>
     <dependencies>
         <dependency>

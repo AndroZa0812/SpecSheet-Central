@@ -30,8 +30,7 @@ class FileStorageServiceTest {
 
         String url = fileStorageService.store(file);
 
-        assertThat(url).startsWith("/uploads/");
-        assertThat(url).endsWith(".png");
+        assertThat(url).startsWith("/uploads/").endsWith(".png");
     }
 
     @Test

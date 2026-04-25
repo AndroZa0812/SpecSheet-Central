@@ -2,6 +2,7 @@ package com.specsheetcentral.service;
 
 import com.specsheetcentral.model.User;
 import com.specsheetcentral.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +18,7 @@ public class UserService {
 
     public User register(String email, String password, User.Role role) {
         if (userRepository.findByEmail(email).isPresent()) {
-            throw new RuntimeException("Email already registered");
+            throw new IllegalArgumentException("Email already registered");
         }
         User user = new User();
         user.setEmail(email);
@@ -28,6 +29,6 @@ public class UserService {
 
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new EntityNotFoundException("User not found"));
     }
 }

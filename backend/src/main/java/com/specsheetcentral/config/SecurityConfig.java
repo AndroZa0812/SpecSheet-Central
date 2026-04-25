@@ -16,6 +16,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 public class SecurityConfig {
+
+    private static final String API_PRODUCTS = "/api/products/**";
+    private static final String API_CATEGORIES = "/api/categories/**";
+    private static final String ADMIN_ROLE = "ADMIN";
+
     private final JwtFilter jwtFilter;
 
     public SecurityConfig(JwtFilter jwtFilter) {
@@ -24,22 +29,26 @@ public class SecurityConfig {
 
     @Bean
     @Profile("!test")
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**").permitAll()
-                .requestMatchers("/uploads/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/products/**", "/api/categories/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/products/**", "/api/categories/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PATCH, "/api/products/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/products/**", "/api/categories/**").hasRole("ADMIN")
-                .requestMatchers("/api/orders/**").authenticated()
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-        return http.build();
+    public SecurityFilterChain filterChain(HttpSecurity http) {
+        try {
+            http.csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                    .requestMatchers("/api/auth/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, API_PRODUCTS, API_CATEGORIES).permitAll()
+                    .requestMatchers("/uploads/**").permitAll()
+                    .requestMatchers(HttpMethod.POST, API_PRODUCTS, API_CATEGORIES).hasRole(ADMIN_ROLE)
+                    .requestMatchers(HttpMethod.PUT, API_PRODUCTS, API_CATEGORIES).hasRole(ADMIN_ROLE)
+                    .requestMatchers(HttpMethod.PATCH, API_PRODUCTS).hasRole(ADMIN_ROLE)
+                    .requestMatchers(HttpMethod.DELETE, API_PRODUCTS, API_CATEGORIES).hasRole(ADMIN_ROLE)
+                    .requestMatchers("/api/orders/**").authenticated()
+                    .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+            return http.build();
+        } catch (Exception e) {
+            throw new SecurityException("Failed to configure security filter chain", e);
+        }
     }
 
     @Bean
@@ -48,7 +57,11 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) {
+        try {
+            return config.getAuthenticationManager();
+        } catch (Exception e) {
+            throw new SecurityException("Failed to create authentication manager", e);
+        }
     }
 }

@@ -8,6 +8,7 @@ import com.specsheetcentral.model.ProductSpec;
 import com.specsheetcentral.repository.CategoryRepository;
 import com.specsheetcentral.repository.ProductRepository;
 import com.specsheetcentral.repository.ProductSpecRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,9 @@ import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
+
+    private static final String PRODUCT_NOT_FOUND = "Product not found";
+
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ProductSpecRepository productSpecRepository;
@@ -55,19 +59,19 @@ public class ProductService {
 
         return productRepository.findAll(spec).stream()
             .map(this::toResponse)
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public ProductResponse findById(Long id) {
         Product product = productRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Product not found"));
+            .orElseThrow(() -> new EntityNotFoundException(PRODUCT_NOT_FOUND));
         return toResponse(product);
     }
 
     @Transactional
     public ProductResponse create(ProductRequest request) {
         Category category = categoryRepository.findById(request.getCategoryId())
-            .orElseThrow(() -> new RuntimeException("Category not found"));
+            .orElseThrow(() -> new EntityNotFoundException("Category not found"));
 
         Product product = new Product();
         product.setName(request.getName());
@@ -90,7 +94,7 @@ public class ProductService {
                     spec.setSpecValue(e.getValue());
                     return spec;
                 })
-                .collect(Collectors.toList());
+                .toList();
             productSpecRepository.saveAll(specs);
             saved.setSpecs(specs);
         }
@@ -101,10 +105,10 @@ public class ProductService {
     @Transactional
     public ProductResponse update(Long id, ProductRequest request) {
         Product product = productRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Product not found"));
+            .orElseThrow(() -> new EntityNotFoundException(PRODUCT_NOT_FOUND));
 
         Category category = categoryRepository.findById(request.getCategoryId())
-            .orElseThrow(() -> new RuntimeException("Category not found"));
+            .orElseThrow(() -> new EntityNotFoundException("Category not found"));
 
         product.setName(request.getName());
         product.setSku(request.getSku());
@@ -126,7 +130,7 @@ public class ProductService {
                     spec.setSpecValue(e.getValue());
                     return spec;
                 })
-                .collect(Collectors.toList());
+                .toList();
             productSpecRepository.saveAll(specs);
             product.setSpecs(specs);
         }
@@ -142,7 +146,7 @@ public class ProductService {
     @Transactional
     public ProductResponse updateStock(Long id, Integer quantity) {
         Product product = productRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Product not found"));
+            .orElseThrow(() -> new EntityNotFoundException(PRODUCT_NOT_FOUND));
         product.setStockQuantity(quantity);
         return toResponse(productRepository.save(product));
     }

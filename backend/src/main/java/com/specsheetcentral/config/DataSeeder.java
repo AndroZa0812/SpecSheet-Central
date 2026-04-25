@@ -8,10 +8,14 @@ import com.specsheetcentral.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 public class DataSeeder {
+
+    private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
     @Bean
     CommandLineRunner seed(CategoryRepository categories,
                            ProductRepository products,
@@ -52,9 +56,11 @@ public class DataSeeder {
             s1.setSpecValue("ATmega328P");
             specs.save(s1);
 
+            String operatingVoltage = "Operating Voltage";
+
             ProductSpec s2 = new ProductSpec();
             s2.setProduct(p1);
-            s2.setSpecKey("Operating Voltage");
+            s2.setSpecKey(operatingVoltage);
             s2.setSpecValue("5V");
             specs.save(s2);
 
@@ -99,7 +105,7 @@ public class DataSeeder {
 
             ProductSpec s8 = new ProductSpec();
             s8.setProduct(p2);
-            s8.setSpecKey("Operating Voltage");
+            s8.setSpecKey(operatingVoltage);
             s8.setSpecValue("5V");
             specs.save(s8);
 
@@ -147,7 +153,7 @@ public class DataSeeder {
 
             ProductSpec s13 = new ProductSpec();
             s13.setProduct(p4);
-            s13.setSpecKey("Operating Voltage");
+            s13.setSpecKey(operatingVoltage);
             s13.setSpecValue("5V");
             specs.save(s13);
 
@@ -174,7 +180,7 @@ public class DataSeeder {
 
             ProductSpec s16 = new ProductSpec();
             s16.setProduct(p5);
-            s16.setSpecKey("Operating Voltage");
+            s16.setSpecKey(operatingVoltage);
             s16.setSpecValue("5V DC");
             specs.save(s16);
 
@@ -201,7 +207,7 @@ public class DataSeeder {
 
             ProductSpec s19 = new ProductSpec();
             s19.setProduct(p6);
-            s19.setSpecKey("Operating Voltage");
+            s19.setSpecKey(operatingVoltage);
             s19.setSpecValue("3.3V");
             specs.save(s19);
 
@@ -217,17 +223,25 @@ public class DataSeeder {
             s21.setSpecValue("4 MB");
             specs.save(s21);
 
-            User admin = new User();
-            admin.setEmail("admin@specsheet.com");
-            admin.setPasswordHash(encoder.encode("admin123"));
-            admin.setRole(User.Role.ADMIN);
-            users.save(admin);
+            String adminPassword = System.getenv("SEED_ADMIN_PASSWORD");
+            String userPassword = System.getenv("SEED_USER_PASSWORD");
 
-            User user = new User();
-            user.setEmail("user@specsheet.com");
-            user.setPasswordHash(encoder.encode("user123"));
-            user.setRole(User.Role.USER);
-            users.save(user);
+            if (adminPassword != null && !adminPassword.isBlank()
+                    && userPassword != null && !userPassword.isBlank()) {
+                User admin = new User();
+                admin.setEmail("admin@specsheet.com");
+                admin.setPasswordHash(encoder.encode(adminPassword));
+                admin.setRole(User.Role.ADMIN);
+                users.save(admin);
+
+                User user = new User();
+                user.setEmail("user@specsheet.com");
+                user.setPasswordHash(encoder.encode(userPassword));
+                user.setRole(User.Role.USER);
+                users.save(user);
+            } else {
+                log.info("SKIPPED user seeding: SEED_ADMIN_PASSWORD and SEED_USER_PASSWORD env vars not set");
+            }
         };
     }
 }

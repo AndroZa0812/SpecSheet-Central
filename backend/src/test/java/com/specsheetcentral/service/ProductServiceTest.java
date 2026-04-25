@@ -4,7 +4,6 @@ import com.specsheetcentral.dto.ProductRequest;
 import com.specsheetcentral.dto.ProductResponse;
 import com.specsheetcentral.model.Category;
 import com.specsheetcentral.model.Product;
-import com.specsheetcentral.model.ProductSpec;
 import com.specsheetcentral.repository.CategoryRepository;
 import com.specsheetcentral.repository.ProductRepository;
 import com.specsheetcentral.repository.ProductSpecRepository;

@@ -9,12 +9,12 @@ import com.specsheetcentral.model.User;
 import com.specsheetcentral.repository.OrderRepository;
 import com.specsheetcentral.repository.ProductRepository;
 import com.specsheetcentral.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
@@ -33,7 +33,7 @@ public class OrderService {
     @Transactional
     public OrderResponse create(String userEmail, OrderRequest request) {
         User user = userRepository.findByEmail(userEmail)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         Order order = new Order();
         order.setUser(user);
@@ -43,9 +43,9 @@ public class OrderService {
         double total = 0;
         for (OrderRequest.OrderItemRequest itemReq : request.getItems()) {
             Product product = productRepository.findById(itemReq.getProductId())
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
             if (product.getStockQuantity() < itemReq.getQuantity()) {
-                throw new RuntimeException("Insufficient stock for " + product.getName());
+                throw new IllegalStateException("Insufficient stock for " + product.getName());
             }
             product.setStockQuantity(product.getStockQuantity() - itemReq.getQuantity());
             productRepository.save(product);
@@ -67,18 +67,18 @@ public class OrderService {
     public List<OrderResponse> findByUser(String userEmail) {
         return orderRepository.findByUserEmail(userEmail).stream()
             .map(this::toResponse)
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public List<OrderResponse> findAll() {
         return orderRepository.findAll().stream()
             .map(this::toResponse)
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public OrderResponse updateStatus(Long id, String status) {
         Order order = orderRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Order not found"));
+            .orElseThrow(() -> new EntityNotFoundException("Order not found"));
         order.setStatus(Order.Status.valueOf(status));
         return toResponse(orderRepository.save(order));
     }
@@ -97,7 +97,7 @@ public class OrderService {
             i.setQuantity(item.getQuantity());
             i.setPriceAtPurchase(item.getPriceAtPurchase());
             return i;
-        }).collect(Collectors.toList()));
+        }).toList());
         return response;
     }
 }

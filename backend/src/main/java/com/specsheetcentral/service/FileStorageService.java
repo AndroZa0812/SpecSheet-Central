@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.*;
 import java.util.UUID;
 
@@ -23,7 +24,7 @@ public class FileStorageService {
             Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
             return "/uploads/" + filename;
         } catch (IOException e) {
-            throw new RuntimeException("Failed to store file", e);
+            throw new UncheckedIOException("Failed to store file", e);
         }
     }
 }
