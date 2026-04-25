@@ -68,7 +68,9 @@
   }
 </script>
 
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="modal-backdrop" onclick={onclose}>
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="modal" onclick={(e) => e.stopPropagation()}>
     <div class="modal-header">
       <h2>{product ? 'Edit Product' : 'Add Product'}</h2>
