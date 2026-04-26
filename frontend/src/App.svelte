@@ -10,6 +10,7 @@
   import Compare from "./routes/Compare.svelte";
   import Cart from "./routes/Cart.svelte";
   import Admin from "./routes/Admin.svelte";
+  import AdminGuard from "./components/AdminGuard.svelte";
   import { Toaster } from "$lib/components/ui/sonner";
 </script>
 
@@ -22,6 +23,10 @@
   <Route path="/products/:id" component={ProductDetail} />
   <Route path="/compare" component={Compare} />
   <Route path="/cart" component={Cart} />
-  <Route path="/admin" component={Admin} />
+  <Route path="/admin">
+    <AdminGuard>
+      <Admin />
+    </AdminGuard>
+  </Route>
 </main>
 <Toaster />

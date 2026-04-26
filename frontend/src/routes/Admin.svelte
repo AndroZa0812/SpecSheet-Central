@@ -1,8 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import api from "$lib/api";
-  import { auth } from "$lib/stores";
-  import { navigate } from "$lib/router";
   import { formatPrice, getStockVariant } from "$lib/utils";
   import ProductFormModal from "../components/ProductFormModal.svelte";
   import type { ProductResponse, Category, OrderResponse } from "$lib/types";
@@ -60,11 +57,7 @@
       : products,
   );
 
-  onMount(() => {
-    if (!$auth || $auth.role !== "ADMIN") {
-      navigate("/");
-      return;
-    }
+  $effect(() => {
     loadData();
   });
 
@@ -79,7 +72,7 @@
         products = prodRes.data;
         categories = catRes.data;
       } else if (activeTab === "orders") {
-        const res = await api.get<OrderResponse[]>("/orders");
+        const res = await api.get<OrderResponse[]>("/admin/orders");
         orders = res.data;
       }
     } catch (err) {
@@ -106,7 +99,7 @@
 
   async function handleDelete(id: number) {
     try {
-      await api.delete(`/products/${id}`);
+      await api.delete(`/admin/products/${id}`);
       toast.success("Product deleted");
       loadData();
     } catch (err) {
@@ -116,7 +109,7 @@
 
   async function updateStock(id: number, quantity: number) {
     try {
-      await api.patch(`/products/${id}/stock`, null, { params: { quantity } });
+      await api.patch(`/admin/products/${id}/stock`, null, { params: { quantity } });
       toast.success("Stock updated");
       loadData();
     } catch (err) {
@@ -126,7 +119,7 @@
 
   async function updateOrderStatus(id: number, status: string) {
     try {
-      await api.patch(`/orders/${id}/status`, null, { params: { status } });
+      await api.patch(`/admin/orders/${id}/status`, null, { params: { status } });
       toast.success("Order status updated");
       loadData();
     } catch (err) {

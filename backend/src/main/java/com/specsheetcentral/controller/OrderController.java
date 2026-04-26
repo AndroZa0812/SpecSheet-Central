@@ -11,6 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
+@CrossOrigin(origins = "*")
 public class OrderController {
     private final OrderService orderService;
 
@@ -20,22 +21,12 @@ public class OrderController {
 
     @PostMapping
     public OrderResponse create(@AuthenticationPrincipal UserDetails user,
-                                 @RequestBody OrderRequest request) {
+                                @RequestBody OrderRequest request) {
         return orderService.create(user.getUsername(), request);
     }
 
     @GetMapping("/my")
     public List<OrderResponse> getMyOrders(@AuthenticationPrincipal UserDetails user) {
         return orderService.findByUser(user.getUsername());
-    }
-
-    @GetMapping
-    public List<OrderResponse> getAll() {
-        return orderService.findAll();
-    }
-
-    @PatchMapping("/{id}/status")
-    public OrderResponse updateStatus(@PathVariable Long id, @RequestParam String status) {
-        return orderService.updateStatus(id, status);
     }
 }

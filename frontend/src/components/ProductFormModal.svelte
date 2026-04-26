@@ -118,10 +118,10 @@
     try {
       let savedProduct: ProductResponse;
       if (product) {
-        const res = await api.put<ProductResponse>(`/products/${product.id}`, data);
+        const res = await api.put<ProductResponse>(`/admin/products/${product.id}`, data);
         savedProduct = res.data;
       } else {
-        const res = await api.post<ProductResponse>("/products", data);
+        const res = await api.post<ProductResponse>("/admin/products", data);
         savedProduct = res.data;
       }
 

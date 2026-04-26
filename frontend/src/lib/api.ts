@@ -23,7 +23,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      window.location.href = "/";
+      window.location.href = "/login";
     }
     return Promise.reject(error);
   },
@@ -55,7 +55,7 @@ export async function uploadDatasheet(
   if (file) formData.append("datasheetFile", file);
   if (url) formData.append("datasheetUrl", url);
   if (clear) formData.append("clearDatasheet", "true");
-  return api.post<ProductResponse>(`/products/${productId}/datasheet`, formData);
+  return api.post<ProductResponse>(`/admin/products/${productId}/datasheet`, formData);
 }
 
 export default api;
