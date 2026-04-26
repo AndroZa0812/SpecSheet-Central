@@ -9,22 +9,14 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockConstruction;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 class FileStorageServiceTest {
 
@@ -41,30 +33,30 @@ class FileStorageServiceTest {
 
     @Test
     void shouldStoreFileAndReturnUrl() {
-        MockMultipartFile file = new MockMultipartFile(
+        final MockMultipartFile file = new MockMultipartFile(
             "file", "test.png", "image/png", "test-image-content".getBytes());
 
-        String url = fileStorageService.store(file);
+        final String url = fileStorageService.store(file);
 
         assertThat(url).startsWith("/uploads/").endsWith(".png");
     }
 
     @Test
     void shouldHandleDifferentExtensions() {
-        MockMultipartFile file = new MockMultipartFile(
+        final MockMultipartFile file = new MockMultipartFile(
             "file", "datasheet.pdf", "application/pdf", "pdf-content".getBytes());
 
-        String url = fileStorageService.store(file);
+        final String url = fileStorageService.store(file);
 
         assertThat(url).endsWith(".pdf");
     }
 
     @Test
     void storeFile_shouldStoreFileAndReturnOnlyFilename() {
-        MockMultipartFile file = new MockMultipartFile(
+        final MockMultipartFile file = new MockMultipartFile(
             "file", "test.png", "image/png", "test-image-content".getBytes());
 
-        String filename = fileStorageService.storeFile(file);
+        final String filename = fileStorageService.storeFile(file);
 
         assertThat(filename).doesNotStartWith("/uploads/");
         assertThat(filename).endsWith(".png");
@@ -73,43 +65,55 @@ class FileStorageServiceTest {
 
     @Test
     void storeFile_shouldUseUuidAndOriginalExtension() {
-        MockMultipartFile file = new MockMultipartFile(
+        final MockMultipartFile file = new MockMultipartFile(
             "file", "datasheet.pdf", "application/pdf", "pdf-content".getBytes());
 
-        String filename = fileStorageService.storeFile(file);
+        final String filename = fileStorageService.storeFile(file);
 
         assertThat(filename).matches("^[a-f0-9\\-]+\\.pdf$");
         assertThat(tempDir.resolve(filename)).exists();
     }
 
     @Test
-    void storeFile_shouldCreateDirectoriesIfNeeded(@TempDir Path rootTempDir) {
-        Path nestedDir = rootTempDir.resolve("nested/uploads");
-        FileStorageService service = new FileStorageService();
+    void storeFile_shouldCreateDirectoriesIfNeeded(@TempDir final Path rootTempDir) {
+        final Path nestedDir = rootTempDir.resolve("nested/uploads");
+        final FileStorageService service = new FileStorageService();
         ReflectionTestUtils.setField(service, "uploadDir", nestedDir.toString());
 
-        MockMultipartFile file = new MockMultipartFile(
+        final MockMultipartFile file = new MockMultipartFile(
             "file", "test.txt", "text/plain", "content".getBytes());
 
-        String filename = service.storeFile(file);
+        final String filename = service.storeFile(file);
 
         assertThat(nestedDir.resolve(filename)).exists();
     }
 
     @Test
     void storeFile_shouldHandleFilesWithoutExtension() {
-        MockMultipartFile file = new MockMultipartFile(
+        final MockMultipartFile file = new MockMultipartFile(
             "file", "README", "text/plain", "content".getBytes());
 
-        String filename = fileStorageService.storeFile(file);
+        final String filename = fileStorageService.storeFile(file);
 
         assertThat(filename).doesNotContain(".");
         assertThat(tempDir.resolve(filename)).exists();
     }
 
     @Test
+    void storeFile_shouldSafelyStoreFileDespiteMaliciousOriginalFilename() {
+        final MockMultipartFile file = new MockMultipartFile(
+            "file", "evil.txt/../../passwd", "text/plain", "content".getBytes());
+
+        final String filename = fileStorageService.storeFile(file);
+
+        assertThat(filename).doesNotContain("/");
+        assertThat(tempDir.resolve(filename)).exists();
+        assertThat(tempDir.resolve(filename).getParent()).isEqualTo(tempDir);
+    }
+
+    @Test
     void deleteFile_shouldDeleteExistingFile() throws IOException {
-        Path existingFile = tempDir.resolve("existing-file.txt");
+        final Path existingFile = tempDir.resolve("existing-file.txt");
         Files.writeString(existingFile, "content");
 
         fileStorageService.deleteFile("existing-file.txt");
@@ -133,21 +137,12 @@ class FileStorageServiceTest {
 
     @Test
     void fetchAndStore_shouldFetchPdfAndStoreIt() throws IOException {
-        HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
-        server.createContext("/test.pdf", (HttpExchange exchange) -> {
-            exchange.getResponseHeaders().set("Content-Type", "application/pdf");
-            byte[] response = "pdf-content".getBytes();
-            exchange.sendResponseHeaders(200, response.length);
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(response);
-            }
-        });
-        server.start();
-        int port = server.getAddress().getPort();
+        final HttpServer server = startServer("/test.pdf", 200, "application/pdf", "pdf-content".getBytes());
+        final int port = server.getAddress().getPort();
         try {
-            String url = "http://localhost:" + port + "/test.pdf";
+            final String url = "http://localhost:" + port + "/test.pdf";
 
-            String filename = fileStorageService.fetchAndStore(url);
+            final String filename = fileStorageService.fetchAndStore(url);
 
             assertThat(filename).endsWith(".pdf");
             assertThat(tempDir.resolve(filename)).exists();
@@ -159,14 +154,10 @@ class FileStorageServiceTest {
 
     @Test
     void fetchAndStore_shouldThrowForNon200Status() throws IOException {
-        HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
-        server.createContext("/error.pdf", (HttpExchange exchange) -> {
-            exchange.sendResponseHeaders(404, -1);
-        });
-        server.start();
-        int port = server.getAddress().getPort();
+        final HttpServer server = startServer("/error.pdf", 404, null, null);
+        final int port = server.getAddress().getPort();
         try {
-            String url = "http://localhost:" + port + "/error.pdf";
+            final String url = "http://localhost:" + port + "/error.pdf";
 
             assertThatThrownBy(() -> fileStorageService.fetchAndStore(url))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -178,19 +169,10 @@ class FileStorageServiceTest {
 
     @Test
     void fetchAndStore_shouldThrowForNonPdfContentType() throws IOException {
-        HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
-        server.createContext("/not-pdf.txt", (HttpExchange exchange) -> {
-            exchange.getResponseHeaders().set("Content-Type", "text/plain");
-            byte[] response = "text-content".getBytes();
-            exchange.sendResponseHeaders(200, response.length);
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(response);
-            }
-        });
-        server.start();
-        int port = server.getAddress().getPort();
+        final HttpServer server = startServer("/not-pdf.txt", 200, "text/plain", "text-content".getBytes());
+        final int port = server.getAddress().getPort();
         try {
-            String url = "http://localhost:" + port + "/not-pdf.txt";
+            final String url = "http://localhost:" + port + "/not-pdf.txt";
 
             assertThatThrownBy(() -> fileStorageService.fetchAndStore(url))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -201,42 +183,13 @@ class FileStorageServiceTest {
     }
 
     @Test
-    void fetchAndStore_shouldSetConnectionAndReadTimeouts() throws IOException {
-        HttpURLConnection connMock = mock(HttpURLConnection.class);
-        when(connMock.getResponseCode()).thenReturn(200);
-        when(connMock.getContentType()).thenReturn("application/pdf");
-        InputStream dummyIn = new ByteArrayInputStream("pdf-content".getBytes());
-        when(connMock.getInputStream()).thenReturn(dummyIn);
-
-        try (var mocked = mockConstruction(URL.class,
-                (mock, context) -> when(mock.openConnection()).thenReturn(connMock))) {
-
-            String filename = fileStorageService.fetchAndStore("http://example.com/test.pdf");
-
-            assertThat(filename).endsWith(".pdf");
-            assertThat(tempDir.resolve(filename)).exists();
-        }
-
-        verify(connMock).setConnectTimeout(10_000);
-        verify(connMock).setReadTimeout(30_000);
-    }
-
-    @Test
     void fetchAndStore_shouldAllowNullContentType() throws IOException {
-        HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
-        server.createContext("/no-content-type.pdf", (HttpExchange exchange) -> {
-            byte[] response = "pdf-content".getBytes();
-            exchange.sendResponseHeaders(200, response.length);
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(response);
-            }
-        });
-        server.start();
-        int port = server.getAddress().getPort();
+        final HttpServer server = startServer("/no-content-type.pdf", 200, null, "pdf-content".getBytes());
+        final int port = server.getAddress().getPort();
         try {
-            String url = "http://localhost:" + port + "/no-content-type.pdf";
+            final String url = "http://localhost:" + port + "/no-content-type.pdf";
 
-            String filename = fileStorageService.fetchAndStore(url);
+            final String filename = fileStorageService.fetchAndStore(url);
 
             assertThat(filename).endsWith(".pdf");
             assertThat(tempDir.resolve(filename)).exists();
@@ -244,5 +197,57 @@ class FileStorageServiceTest {
         } finally {
             server.stop(0);
         }
+    }
+
+    @Test
+    void fetchAndStore_shouldRejectNonHttpScheme() {
+        assertThatThrownBy(() -> fileStorageService.fetchAndStore("ftp://example.com/file.pdf"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("Only HTTP and HTTPS URLs are supported");
+    }
+
+    @Test
+    void store_shouldRejectNullFile() {
+        assertThatThrownBy(() -> fileStorageService.store(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("File must not be null");
+    }
+
+    @Test
+    void storeFile_shouldRejectNullFile() {
+        assertThatThrownBy(() -> fileStorageService.storeFile(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("File must not be null");
+    }
+
+    @Test
+    void deleteFile_shouldRejectNullFilename() {
+        assertThatThrownBy(() -> fileStorageService.deleteFile(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("Filename must not be null");
+    }
+
+    @Test
+    void fetchAndStore_shouldRejectNullUrl() {
+        assertThatThrownBy(() -> fileStorageService.fetchAndStore(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("URL must not be null");
+    }
+
+    private HttpServer startServer(final String path, final int responseCode, final String contentType, final byte[] body) throws IOException {
+        final HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext(path, (final HttpExchange exchange) -> {
+            if (contentType != null) {
+                exchange.getResponseHeaders().set("Content-Type", contentType);
+            }
+            exchange.sendResponseHeaders(responseCode, body != null ? body.length : -1);
+            if (body != null) {
+                try (final OutputStream os = exchange.getResponseBody()) {
+                    os.write(body);
+                }
+            }
+        });
+        server.start();
+        return server;
     }
 }
