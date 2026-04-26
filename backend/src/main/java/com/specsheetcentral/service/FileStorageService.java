@@ -57,6 +57,20 @@ public class FileStorageService {
         }
     }
 
+    public String sanitizeUrl(final String url) {
+        Objects.requireNonNull(url, "URL must not be null");
+        try {
+            final URL urlObj = URI.create(url).toURL();
+            if (!"http".equalsIgnoreCase(urlObj.getProtocol()) && !"https".equalsIgnoreCase(urlObj.getProtocol())) {
+                throw new IllegalArgumentException("Only HTTP and HTTPS URLs are supported");
+            }
+            validateNotInternalUrl(urlObj);
+            return url;
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to validate URL", e);
+        }
+    }
+
     public String fetchAndStore(final String url) {
         Objects.requireNonNull(url, "URL must not be null");
         try {

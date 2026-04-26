@@ -6,6 +6,7 @@ import com.specsheetcentral.dto.ProductRequest;
 import com.specsheetcentral.dto.ProductResponse;
 import com.specsheetcentral.model.Category;
 import com.specsheetcentral.service.CategoryService;
+import com.specsheetcentral.service.FileStorageService;
 import com.specsheetcentral.service.OrderService;
 import com.specsheetcentral.service.ProductService;
 import org.springframework.http.MediaType;
@@ -24,22 +25,31 @@ public class AdminController {
     private final ProductService productService;
     private final CategoryService categoryService;
     private final OrderService orderService;
+    private final FileStorageService fileStorageService;
 
     public AdminController(ProductService productService,
                            CategoryService categoryService,
-                           OrderService orderService) {
+                           OrderService orderService,
+                           FileStorageService fileStorageService) {
         this.productService = productService;
         this.categoryService = categoryService;
         this.orderService = orderService;
+        this.fileStorageService = fileStorageService;
     }
 
     @PostMapping("/products")
     public ProductResponse createProduct(@RequestBody ProductRequest request) {
+        if (request.getDatasheetUrl() != null && !request.getDatasheetUrl().isBlank()) {
+            request.setDatasheetUrl(fileStorageService.sanitizeUrl(request.getDatasheetUrl()));
+        }
         return productService.create(request);
     }
 
     @PutMapping("/products/{id}")
     public ProductResponse updateProduct(@PathVariable Long id, @RequestBody ProductRequest request) {
+        if (request.getDatasheetUrl() != null && !request.getDatasheetUrl().isBlank()) {
+            request.setDatasheetUrl(fileStorageService.sanitizeUrl(request.getDatasheetUrl()));
+        }
         return productService.update(id, request);
     }
 
@@ -60,7 +70,9 @@ public class AdminController {
             @RequestParam(value = "datasheetFile", required = false) MultipartFile datasheetFile,
             @RequestParam(value = "datasheetUrl", required = false) String datasheetUrl,
             @RequestParam(value = "clearDatasheet", required = false, defaultValue = "false") boolean clearDatasheet) {
-        return productService.updateDatasheet(id, datasheetFile, datasheetUrl, clearDatasheet);
+        final String sanitizedUrl = (datasheetUrl != null && !datasheetUrl.isBlank())
+                ? fileStorageService.sanitizeUrl(datasheetUrl) : datasheetUrl;
+        return productService.updateDatasheet(id, datasheetFile, sanitizedUrl, clearDatasheet);
     }
 
     @PostMapping("/categories")

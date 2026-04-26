@@ -2,6 +2,7 @@ package com.specsheetcentral.controller;
 
 import com.specsheetcentral.dto.ProductRequest;
 import com.specsheetcentral.dto.ProductResponse;
+import com.specsheetcentral.service.FileStorageService;
 import com.specsheetcentral.service.ProductService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -14,9 +15,11 @@ import java.util.List;
 @RequestMapping("/api/products")
 public class ProductController {
     private final ProductService productService;
+    private final FileStorageService fileStorageService;
 
-    public ProductController(ProductService productService) {
+    public ProductController(ProductService productService, FileStorageService fileStorageService) {
         this.productService = productService;
+        this.fileStorageService = fileStorageService;
     }
 
     @GetMapping
@@ -36,11 +39,17 @@ public class ProductController {
 
     @PostMapping
     public ProductResponse create(@RequestBody ProductRequest request) {
+        if (request.getDatasheetUrl() != null && !request.getDatasheetUrl().isBlank()) {
+            request.setDatasheetUrl(fileStorageService.sanitizeUrl(request.getDatasheetUrl()));
+        }
         return productService.create(request);
     }
 
     @PutMapping("/{id}")
     public ProductResponse update(@PathVariable Long id, @RequestBody ProductRequest request) {
+        if (request.getDatasheetUrl() != null && !request.getDatasheetUrl().isBlank()) {
+            request.setDatasheetUrl(fileStorageService.sanitizeUrl(request.getDatasheetUrl()));
+        }
         return productService.update(id, request);
     }
 
@@ -61,6 +70,8 @@ public class ProductController {
             @RequestParam(value = "datasheetFile", required = false) MultipartFile datasheetFile,
             @RequestParam(value = "datasheetUrl", required = false) String datasheetUrl,
             @RequestParam(value = "clearDatasheet", required = false, defaultValue = "false") boolean clearDatasheet) {
-        return productService.updateDatasheet(id, datasheetFile, datasheetUrl, clearDatasheet);
+        final String sanitizedUrl = (datasheetUrl != null && !datasheetUrl.isBlank())
+                ? fileStorageService.sanitizeUrl(datasheetUrl) : datasheetUrl;
+        return productService.updateDatasheet(id, datasheetFile, sanitizedUrl, clearDatasheet);
     }
 }
