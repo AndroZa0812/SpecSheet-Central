@@ -12,7 +12,7 @@ public class ProductSpec {
 
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
-    @JsonIgnoreProperties({"specs", "category"})
+    @JsonIgnoreProperties({"specs", "category", "reviews"})
     private Product product;
 
     @Column(nullable = false)

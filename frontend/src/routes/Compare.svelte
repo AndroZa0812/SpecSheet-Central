@@ -123,7 +123,7 @@
           {#if product.imageUrl}
             <img src={product.imageUrl} alt="" class="size-6 rounded object-contain" />
           {:else}
-            <div class="size-6 rounded bg-muted" />
+            <div class="size-6 rounded bg-muted"></div>
           {/if}
           <span class="max-w-[180px] truncate font-medium">{product.name}</span>
           <button

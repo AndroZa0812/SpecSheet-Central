@@ -8,6 +8,7 @@ export interface ProductResponse {
   name: string;
   sku: string;
   price: number;
+  costPrice: number | null;
   stockQuantity: number;
   lowStockThreshold: number;
   categoryName: string;

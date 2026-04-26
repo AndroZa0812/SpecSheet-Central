@@ -36,6 +36,7 @@
     name: "",
     sku: "",
     price: "",
+    costPrice: "",
     stockQuantity: "",
     lowStockThreshold: "10",
     categoryId: "",
@@ -56,6 +57,7 @@
         name: product.name,
         sku: product.sku,
         price: String(product.price),
+        costPrice: product.costPrice != null ? String(product.costPrice) : "",
         stockQuantity: String(product.stockQuantity),
         lowStockThreshold: String(product.lowStockThreshold ?? 10),
         categoryId: String(product.categoryId || ""),
@@ -100,13 +102,13 @@
   async function handleSubmit(e: Event) {
     e.preventDefault();
     saving = true;
-    const data = {
+    const data: any = {
       name: form.name,
       sku: form.sku,
       price: parseFloat(form.price),
+      costPrice: form.costPrice ? parseFloat(form.costPrice) : null,
       stockQuantity: parseInt(form.stockQuantity),
       lowStockThreshold: parseInt(form.lowStockThreshold),
-      categoryId: parseInt(form.categoryId),
       manufacturer: form.manufacturer,
       imageUrl: form.imageUrl,
       description: form.description,
@@ -114,6 +116,10 @@
         form.specs.filter((s) => s.key).map((s) => [s.key, s.value]),
       ),
     };
+
+    if (form.categoryId) {
+      data.categoryId = parseInt(form.categoryId);
+    }
 
     try {
       let savedProduct: ProductResponse;
@@ -168,6 +174,10 @@
           <Input id="price" type="number" step="0.01" bind:value={form.price} required />
         </div>
         <div class="flex flex-col gap-2">
+          <Label for="costPrice">Cost Price</Label>
+          <Input id="costPrice" type="number" step="0.01" bind:value={form.costPrice} placeholder="What you paid" />
+        </div>
+        <div class="flex flex-col gap-2">
           <Label for="stock">Stock Quantity</Label>
           <Input id="stock" type="number" bind:value={form.stockQuantity} required />
         </div>
@@ -177,7 +187,7 @@
         </div>
         <div class="flex flex-col gap-2">
           <Label for="category">Category</Label>
-          <Select value={form.categoryId ? [form.categoryId] : []} onValueChange={(v: string[]) => form.categoryId = v[0] ?? ""}>
+          <Select type="single" value={form.categoryId} onValueChange={(v: string) => form.categoryId = v}>
             <SelectTrigger>
               {#if form.categoryId}
                 <span>{categories.find(c => String(c.id) === form.categoryId)?.name ?? "Select a category"}</span>

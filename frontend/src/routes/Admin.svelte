@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import api from "$lib/api";
   import { formatPrice, getStockVariant } from "$lib/utils";
   import ProductFormModal from "../components/ProductFormModal.svelte";
@@ -30,7 +31,7 @@
   import { Separator } from "$lib/components/ui/separator";
   import { Skeleton } from "$lib/components/ui/skeleton";
   import { Empty } from "$lib/components/ui/empty";
-  import { Plus, Search, MoreHorizontal, Pencil, Trash2, Package, ArrowUpDown, DollarSign, AlertTriangle } from "lucide-svelte";
+  import { Plus, Search, MoreHorizontal, Pencil, Trash2, Package, ArrowUpDown, DollarSign, AlertTriangle, ChevronDown, ChevronRight, TrendingUp, Percent } from "lucide-svelte";
   import { toast } from "svelte-sonner";
 
   let activeTab = $state<"products" | "orders">("products");
@@ -41,11 +42,21 @@
   let showModal = $state(false);
   let editingProduct: ProductResponse | null = $state(null);
   let searchQuery = $state("");
+  let expandedOrderId = $state<number | null>(null);
 
   let totalProducts = $derived(products.length);
   let totalStockUnits = $derived(products.reduce((sum, p) => sum + p.stockQuantity, 0));
   let inventoryValue = $derived(products.reduce((sum, p) => sum + p.price * p.stockQuantity, 0));
   let lowStockItems = $derived(products.filter((p) => p.stockQuantity <= (p.lowStockThreshold ?? 10)).length);
+  let productsWithCost = $derived(products.filter((p) => p.costPrice != null));
+  let avgProfitMargin = $derived(
+    productsWithCost.length > 0
+      ? productsWithCost.reduce((sum, p) => sum + ((p.price - p.costPrice!) / p.price), 0) / productsWithCost.length * 100
+      : 0,
+  );
+  let totalPotentialProfit = $derived(
+    productsWithCost.reduce((sum, p) => sum + (p.price - p.costPrice!) * p.stockQuantity, 0),
+  );
 
   let filteredProducts = $derived(
     searchQuery
@@ -57,7 +68,7 @@
       : products,
   );
 
-  $effect(() => {
+  onMount(() => {
     loadData();
   });
 
@@ -72,8 +83,12 @@
         products = prodRes.data;
         categories = catRes.data;
       } else if (activeTab === "orders") {
-        const res = await api.get<OrderResponse[]>("/admin/orders");
-        orders = res.data;
+        const [ordRes, prodRes] = await Promise.all([
+          api.get<OrderResponse[]>("/admin/orders"),
+          api.get<ProductResponse[]>("/products"),
+        ]);
+        orders = ordRes.data;
+        products = prodRes.data;
       }
     } catch (err) {
       console.error("Failed to load admin data", err);
@@ -135,6 +150,10 @@
       default: return "secondary";
     }
   }
+
+  function toggleOrderExpand(id: number) {
+    expandedOrderId = expandedOrderId === id ? null : id;
+  }
 </script>
 
 <div class="px-4 py-6">
@@ -142,7 +161,7 @@
     <h1 class="text-2xl font-bold">Admin Panel</h1>
   </div>
 
-  <div class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
     <Card>
       <CardContent class="flex items-center gap-4 p-6">
         <div class="flex size-10 items-center justify-center rounded-lg bg-primary/10">
@@ -206,6 +225,38 @@
         </div>
       </CardContent>
     </Card>
+
+    <Card>
+      <CardContent class="flex items-center gap-4 p-6">
+        <div class="flex size-10 items-center justify-center rounded-lg bg-primary/10">
+          <TrendingUp class="size-5 text-primary" />
+        </div>
+        <div>
+          <p class="text-sm text-muted-foreground">Potential Profit</p>
+          {#if loading}
+            <Skeleton class="mt-1 h-7 w-20" />
+          {:else}
+            <p class="text-2xl font-bold">${totalPotentialProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          {/if}
+        </div>
+      </CardContent>
+    </Card>
+
+    <Card>
+      <CardContent class="flex items-center gap-4 p-6">
+        <div class="flex size-10 items-center justify-center rounded-lg bg-primary/10">
+          <Percent class="size-5 text-primary" />
+        </div>
+        <div>
+          <p class="text-sm text-muted-foreground">Avg Margin</p>
+          {#if loading}
+            <Skeleton class="mt-1 h-7 w-16" />
+          {:else}
+            <p class="text-2xl font-bold">{avgProfitMargin.toFixed(1)}%</p>
+          {/if}
+        </div>
+      </CardContent>
+    </Card>
   </div>
 
   <div class="mb-4 flex items-center gap-2">
@@ -251,6 +302,8 @@
               <TableHead>Name</TableHead>
               <TableHead>SKU</TableHead>
               <TableHead>Price</TableHead>
+              <TableHead>Cost</TableHead>
+              <TableHead>Profit</TableHead>
               <TableHead>Stock</TableHead>
               <TableHead>Category</TableHead>
               <TableHead class="w-24">Actions</TableHead>
@@ -262,6 +315,15 @@
                 <TableCell class="font-medium">{product.name}</TableCell>
                 <TableCell class="text-muted-foreground">{product.sku}</TableCell>
                 <TableCell>{formatPrice(product.price)}</TableCell>
+                <TableCell class="text-muted-foreground">{product.costPrice != null ? formatPrice(product.costPrice) : '—'}</TableCell>
+                <TableCell>
+                  {#if product.costPrice != null}
+                    <span class="text-green-600">{formatPrice(product.price - product.costPrice)}</span>
+                    <span class="ml-1 text-xs text-muted-foreground">({((product.price - product.costPrice) / product.price * 100).toFixed(0)}%)</span>
+                  {:else}
+                    <span class="text-muted-foreground">—</span>
+                  {/if}
+                </TableCell>
                 <TableCell>
                   <Badge variant={getStockVariant(product.stockQuantity, product.lowStockThreshold)}>
                     {product.stockQuantity}
@@ -311,6 +373,7 @@
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead class="w-8"></TableHead>
               <TableHead>ID</TableHead>
               <TableHead>User</TableHead>
               <TableHead>Date</TableHead>
@@ -321,7 +384,14 @@
           </TableHeader>
           <TableBody>
             {#each orders as order}
-              <TableRow>
+              <TableRow class="cursor-pointer" onclick={() => toggleOrderExpand(order.id)}>
+                <TableCell>
+                  {#if expandedOrderId === order.id}
+                    <ChevronDown class="size-4 text-muted-foreground" />
+                  {:else}
+                    <ChevronRight class="size-4 text-muted-foreground" />
+                  {/if}
+                </TableCell>
                 <TableCell class="font-medium">#{order.id}</TableCell>
                 <TableCell>{order.userEmail}</TableCell>
                 <TableCell>{new Date(order.orderDate).toLocaleDateString()}</TableCell>
@@ -330,7 +400,8 @@
                   <Badge variant={getStatusVariant(order.status)}>{order.status}</Badge>
                 </TableCell>
                 <TableCell>
-                  <Select value={[order.status]} onValueChange={(v: string[]) => updateOrderStatus(order.id, v[0])}>
+                  <div role="presentation" onmousedown={(e) => e.stopPropagation()}>
+                  <Select type="single" value={order.status} onValueChange={(v: string) => updateOrderStatus(order.id, v)}>
                     <SelectTrigger class="h-8">
                       <span>{order.status}</span>
                     </SelectTrigger>
@@ -341,8 +412,22 @@
                       <SelectItem value="CANCELLED">CANCELLED</SelectItem>
                     </SelectContent>
                   </Select>
+                  </div>
                 </TableCell>
               </TableRow>
+              {#if expandedOrderId === order.id && order.items}
+                {#each order.items as item}
+                  <TableRow class="bg-muted/50">
+                    <TableCell></TableCell>
+                    <TableCell></TableCell>
+                    <TableCell class="pl-8 text-sm text-muted-foreground">{item.productName}</TableCell>
+                    <TableCell class="text-sm text-muted-foreground">x{item.quantity}</TableCell>
+                    <TableCell class="text-sm">${item.priceAtPurchase.toFixed(2)}</TableCell>
+                    <TableCell class="text-sm text-muted-foreground">Subtotal: ${(item.quantity * item.priceAtPurchase).toFixed(2)}</TableCell>
+                    <TableCell></TableCell>
+                  </TableRow>
+                {/each}
+              {/if}
             {/each}
           </TableBody>
         </Table>

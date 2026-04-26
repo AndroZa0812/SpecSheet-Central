@@ -65,21 +65,43 @@ public class OrderService {
     }
 
     public List<OrderResponse> findByUser(String userEmail) {
-        return orderRepository.findByUserEmail(userEmail).stream()
+        return orderRepository.findByUserEmailOrderByOrderDateDesc(userEmail).stream()
             .map(this::toResponse)
             .toList();
     }
 
     public List<OrderResponse> findAll() {
-        return orderRepository.findAll().stream()
+        return orderRepository.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Order.desc("id"))).stream()
             .map(this::toResponse)
             .toList();
     }
 
+    @Transactional
     public OrderResponse updateStatus(Long id, String status) {
         Order order = orderRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Order not found"));
-        order.setStatus(Order.Status.valueOf(status));
+
+        Order.Status newStatus = Order.Status.valueOf(status);
+        Order.Status oldStatus = order.getStatus();
+
+        if (newStatus == Order.Status.CANCELLED && oldStatus != Order.Status.CANCELLED) {
+            for (OrderItem item : order.getItems()) {
+                Product product = item.getProduct();
+                product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
+                productRepository.save(product);
+            }
+        } else if (oldStatus == Order.Status.CANCELLED && newStatus != Order.Status.CANCELLED) {
+            for (OrderItem item : order.getItems()) {
+                Product product = item.getProduct();
+                if (product.getStockQuantity() < item.getQuantity()) {
+                    throw new IllegalStateException("Insufficient stock for " + product.getName());
+                }
+                product.setStockQuantity(product.getStockQuantity() - item.getQuantity());
+                productRepository.save(product);
+            }
+        }
+
+        order.setStatus(newStatus);
         return toResponse(orderRepository.save(order));
     }
 

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -51,11 +52,12 @@ class CategoryControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void createShouldReturnCreatedCategory() throws Exception {
         CategoryRequest request = new CategoryRequest();
         request.setName("Microcontrollers");
 
-        mockMvc.perform(post("/api/categories")
+        mockMvc.perform(post("/api/admin/categories")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -63,6 +65,7 @@ class CategoryControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void updateShouldReturnUpdatedCategory() throws Exception {
         Category cat = new Category();
         cat.setName("Old");
@@ -71,7 +74,7 @@ class CategoryControllerTest {
         CategoryRequest request = new CategoryRequest();
         request.setName("Updated");
 
-        mockMvc.perform(put("/api/categories/{id}", cat.getId())
+        mockMvc.perform(put("/api/admin/categories/{id}", cat.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -79,12 +82,13 @@ class CategoryControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void deleteShouldReturnNoContent() throws Exception {
         Category cat = new Category();
         cat.setName("Displays");
         cat = categoryRepository.save(cat);
 
-        mockMvc.perform(delete("/api/categories/{id}", cat.getId()))
+        mockMvc.perform(delete("/api/admin/categories/{id}", cat.getId()))
                 .andExpect(status().isNoContent());
     }
 }

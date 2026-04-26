@@ -92,6 +92,9 @@ public class ProductService {
 
     @Transactional
     public ProductResponse create(ProductRequest request) {
+        if (request.getCategoryId() == null) {
+            throw new IllegalArgumentException("Category ID must not be null");
+        }
         Category category = categoryRepository.findById(request.getCategoryId())
             .orElseThrow(() -> new EntityNotFoundException("Category not found"));
 
@@ -99,10 +102,12 @@ public class ProductService {
         product.setName(request.getName());
         product.setSku(request.getSku());
         product.setPrice(request.getPrice());
+        product.setCostPrice(request.getCostPrice());
         product.setStockQuantity(request.getStockQuantity());
         product.setCategory(category);
         product.setManufacturer(request.getManufacturer());
         product.setImageUrl(request.getImageUrl());
+        product.setDescription(request.getDescription());
         product.setLowStockThreshold(request.getLowStockThreshold() != null ? request.getLowStockThreshold() : 10);
 
         if (request.getDatasheetFile() != null && !request.getDatasheetFile().isEmpty()) {
@@ -128,7 +133,7 @@ public class ProductService {
                     spec.setSpecValue(e.getValue());
                     return spec;
                 })
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
             productSpecRepository.saveAll(specs);
             saved.setSpecs(specs);
         }
@@ -141,16 +146,20 @@ public class ProductService {
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException(PRODUCT_NOT_FOUND));
 
-        Category category = categoryRepository.findById(request.getCategoryId())
-            .orElseThrow(() -> new EntityNotFoundException("Category not found"));
+        if (request.getCategoryId() != null) {
+            Category category = categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new EntityNotFoundException("Category not found"));
+            product.setCategory(category);
+        }
 
         product.setName(request.getName());
         product.setSku(request.getSku());
         product.setPrice(request.getPrice());
+        product.setCostPrice(request.getCostPrice());
         product.setStockQuantity(request.getStockQuantity());
-        product.setCategory(category);
         product.setManufacturer(request.getManufacturer());
         product.setImageUrl(request.getImageUrl());
+        product.setDescription(request.getDescription());
         product.setLowStockThreshold(request.getLowStockThreshold() != null ? request.getLowStockThreshold() : 10);
 
         if (request.getDatasheetFile() != null && !request.getDatasheetFile().isEmpty()) {
@@ -173,14 +182,16 @@ public class ProductService {
             }
             product.setDatasheetFilename(null);
             product.setDatasheetUrl(null);
-        } else {
-            product.setDatasheetUrl(request.getDatasheetUrl());
         }
 
-        productSpecRepository.deleteAll(product.getSpecs());
-
         if (request.getSpecs() != null) {
-            List<ProductSpec> specs = request.getSpecs().entrySet().stream()
+            if (product.getSpecs() == null) {
+                product.setSpecs(new ArrayList<>());
+            } else {
+                product.getSpecs().clear();
+            }
+            
+            List<ProductSpec> newSpecs = request.getSpecs().entrySet().stream()
                 .map(e -> {
                     ProductSpec spec = new ProductSpec();
                     spec.setProduct(product);
@@ -188,9 +199,8 @@ public class ProductService {
                     spec.setSpecValue(e.getValue());
                     return spec;
                 })
-                .toList();
-            productSpecRepository.saveAll(specs);
-            product.setSpecs(specs);
+                .collect(Collectors.toCollection(ArrayList::new));
+            product.getSpecs().addAll(newSpecs);
         }
 
         return toResponse(productRepository.save(product));
@@ -258,10 +268,13 @@ public class ProductService {
         response.setName(product.getName());
         response.setSku(product.getSku());
         response.setPrice(product.getPrice());
+        response.setCostPrice(product.getCostPrice());
         response.setStockQuantity(product.getStockQuantity());
+        response.setCategoryId(product.getCategory().getId());
         response.setCategoryName(product.getCategory().getName());
         response.setManufacturer(product.getManufacturer());
         response.setImageUrl(product.getImageUrl());
+        response.setDescription(product.getDescription());
         if (product.getDatasheetFilename() != null) {
             response.setDatasheetUrl(UPLOADS_PATH_PREFIX + product.getDatasheetFilename());
         } else {
@@ -276,6 +289,8 @@ public class ProductService {
         response.setRating(product.getRating());
         response.setReviewCount(product.getReviewCount());
         response.setLowStockThreshold(product.getLowStockThreshold());
+        response.setCostPrice(product.getCostPrice());
+        response.setDescription(product.getDescription());
         return response;
     }
 }

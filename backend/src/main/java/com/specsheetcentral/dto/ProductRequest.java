@@ -8,10 +8,12 @@ public class ProductRequest {
     private String name;
     private String sku;
     private Double price;
+    private Double costPrice;
     private Integer stockQuantity;
     private Long categoryId;
     private String manufacturer;
     private String imageUrl;
+    private String description;
     private String datasheetUrl;
     private Map<String, String> specs;
     private Integer lowStockThreshold;
@@ -24,6 +26,8 @@ public class ProductRequest {
     public void setSku(String sku) { this.sku = sku; }
     public Double getPrice() { return price; }
     public void setPrice(Double price) { this.price = price; }
+    public Double getCostPrice() { return costPrice; }
+    public void setCostPrice(Double costPrice) { this.costPrice = costPrice; }
     public Integer getStockQuantity() { return stockQuantity; }
     public void setStockQuantity(Integer stockQuantity) { this.stockQuantity = stockQuantity; }
     public Long getCategoryId() { return categoryId; }
@@ -32,6 +36,8 @@ public class ProductRequest {
     public void setManufacturer(String manufacturer) { this.manufacturer = manufacturer; }
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
     public String getDatasheetUrl() { return datasheetUrl; }
     public void setDatasheetUrl(String datasheetUrl) { this.datasheetUrl = datasheetUrl; }
     public Map<String, String> getSpecs() { return specs; }

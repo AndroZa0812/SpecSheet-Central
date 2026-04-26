@@ -49,6 +49,7 @@ public class DataSeeder {
             p1.setName("Arduino Uno R3");
             p1.setSku("ARD-UNO-R3");
             p1.setPrice(24.99);
+            p1.setCostPrice(14.50);
             p1.setStockQuantity(150);
             p1.setCategory(microcontrollers);
             p1.setManufacturer("Arduino");
@@ -91,6 +92,7 @@ public class DataSeeder {
             p2.setName("Raspberry Pi 4 Model B");
             p2.setSku("RPI-4B-4GB");
             p2.setPrice(55.00);
+            p2.setCostPrice(35.00);
             p2.setStockQuantity(85);
             p2.setCategory(microcontrollers);
             p2.setManufacturer("Raspberry Pi");
@@ -119,6 +121,7 @@ public class DataSeeder {
             p3.setName("DHT22 Temperature Sensor");
             p3.setSku("DHT-22-MOD");
             p3.setPrice(9.95);
+            p3.setCostPrice(4.20);
             p3.setStockQuantity(200);
             p3.setCategory(sensors);
             p3.setManufacturer("Aosong");
@@ -147,6 +150,7 @@ public class DataSeeder {
             p4.setName("WS2812B LED Strip");
             p4.setSku("LED-WS2812B-1M");
             p4.setPrice(15.99);
+            p4.setCostPrice(7.50);
             p4.setStockQuantity(120);
             p4.setCategory(leds);
             p4.setManufacturer("Worldsemi");
@@ -175,6 +179,7 @@ public class DataSeeder {
             p5.setName("28BYJ-48 Stepper Motor");
             p5.setSku("MTR-28BYJ-48");
             p5.setPrice(4.99);
+            p5.setCostPrice(1.80);
             p5.setStockQuantity(300);
             p5.setCategory(motors);
             p5.setManufacturer("Generic");
@@ -203,6 +208,7 @@ public class DataSeeder {
             p6.setName("ESP32 Dev Board");
             p6.setSku("ESP32-DEV-38P");
             p6.setPrice(12.50);
+            p6.setCostPrice(6.75);
             p6.setStockQuantity(3);
             p6.setCategory(microcontrollers);
             p6.setManufacturer("Espressif");

@@ -163,6 +163,42 @@ class ProductServiceTest {
     }
 
     @Test
+    void update_validRequest_returnsResponse() {
+        Product product = createProduct();
+        ProductRequest request = new ProductRequest();
+        request.setName("Updated Arduino");
+        request.setCategoryId(1L);
+
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(createCategory()));
+        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ProductResponse result = productService.update(1L, request);
+
+        assertThat(result.getName()).isEqualTo("Updated Arduino");
+        verify(productRepository).save(any(Product.class));
+    }
+
+    @Test
+    void update_withNullOldSpecs_shouldNotFail() {
+        Product product = createProduct();
+        product.setSpecs(null); // Ensure old specs are null
+        ProductRequest request = new ProductRequest();
+        request.setName("Updated Arduino");
+        request.setCategoryId(1L);
+        request.setSpecs(Map.of("NewSpec", "Value"));
+
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(createCategory()));
+        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ProductResponse result = productService.update(1L, request);
+
+        assertThat(result.getName()).isEqualTo("Updated Arduino");
+        verify(productSpecRepository, never()).deleteAll(null);
+    }
+
+    @Test
     void findAll_withNoFilters_returnsAll() {
         Product product = createProduct();
 

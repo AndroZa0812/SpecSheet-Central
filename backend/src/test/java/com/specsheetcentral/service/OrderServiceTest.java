@@ -14,12 +14,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.Sort;
+
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -69,25 +72,25 @@ class OrderServiceTest {
 
     @Test
     void findByUser_returnsOrdersForUser() {
-        when(orderRepository.findByUserEmail("user@example.com")).thenReturn(List.of(order));
+        when(orderRepository.findByUserEmailOrderByOrderDateDesc("user@example.com")).thenReturn(List.of(order));
 
         List<OrderResponse> results = orderService.findByUser("user@example.com");
 
         assertThat(results).hasSize(1);
         assertThat(results.get(0).getUserEmail()).isEqualTo("user@example.com");
         assertThat(results.get(0).getTotalAmount()).isEqualTo(50.0);
-        verify(orderRepository).findByUserEmail("user@example.com");
+        verify(orderRepository).findByUserEmailOrderByOrderDateDesc("user@example.com");
     }
 
     @Test
     void findAll_returnsAllOrders() {
-        when(orderRepository.findAll()).thenReturn(List.of(order));
+        when(orderRepository.findAll(any(Sort.class))).thenReturn(List.of(order));
 
         List<OrderResponse> results = orderService.findAll();
 
         assertThat(results).hasSize(1);
         assertThat(results.get(0).getStatus()).isEqualTo("PENDING");
-        verify(orderRepository).findAll();
+        verify(orderRepository).findAll(any(Sort.class));
     }
 
     @Test

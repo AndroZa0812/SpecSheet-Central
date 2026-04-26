@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -51,6 +52,7 @@ class ProductControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void getAllShouldReturnProducts() throws Exception {
         ProductRequest request = new ProductRequest();
         request.setName("Arduino Uno");
@@ -59,7 +61,7 @@ class ProductControllerTest {
         request.setStockQuantity(10);
         request.setCategoryId(category.getId());
 
-        mockMvc.perform(post("/api/products")
+        mockMvc.perform(post("/api/admin/products")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -72,6 +74,7 @@ class ProductControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void deleteShouldReturnNoContent() throws Exception {
         ProductRequest request = new ProductRequest();
         request.setName("Delete Me");
@@ -80,7 +83,7 @@ class ProductControllerTest {
         request.setStockQuantity(5);
         request.setCategoryId(category.getId());
 
-        String json = mockMvc.perform(post("/api/products")
+        String json = mockMvc.perform(post("/api/admin/products")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -88,11 +91,12 @@ class ProductControllerTest {
 
         Long id = objectMapper.readTree(json).get("id").asLong();
 
-        mockMvc.perform(delete("/api/products/{id}", id))
+        mockMvc.perform(delete("/api/admin/products/{id}", id))
                 .andExpect(status().isNoContent());
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void createShouldReturnCreatedProduct() throws Exception {
         ProductRequest request = new ProductRequest();
         request.setName("Arduino Uno");
@@ -102,7 +106,7 @@ class ProductControllerTest {
         request.setCategoryId(category.getId());
         request.setManufacturer("Arduino");
 
-        mockMvc.perform(post("/api/products")
+        mockMvc.perform(post("/api/admin/products")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -112,6 +116,7 @@ class ProductControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void updateStockShouldReturnUpdatedProduct() throws Exception {
         ProductRequest request = new ProductRequest();
         request.setName("Stock Item");
@@ -120,7 +125,7 @@ class ProductControllerTest {
         request.setStockQuantity(5);
         request.setCategoryId(category.getId());
 
-        String json = mockMvc.perform(post("/api/products")
+        String json = mockMvc.perform(post("/api/admin/products")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -128,13 +133,14 @@ class ProductControllerTest {
 
         Long id = objectMapper.readTree(json).get("id").asLong();
 
-        mockMvc.perform(patch("/api/products/{id}/stock", id)
+        mockMvc.perform(patch("/api/admin/products/{id}/stock", id)
                         .param("quantity", "25"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.stockQuantity").value(25));
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void getByIdShouldReturnProduct() throws Exception {
         ProductRequest request = new ProductRequest();
         request.setName("Find Me");
@@ -143,7 +149,7 @@ class ProductControllerTest {
         request.setStockQuantity(1);
         request.setCategoryId(category.getId());
 
-        String json = mockMvc.perform(post("/api/products")
+        String json = mockMvc.perform(post("/api/admin/products")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -157,6 +163,7 @@ class ProductControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void uploadDatasheetShouldStoreFile() throws Exception {
         ProductRequest request = new ProductRequest();
         request.setName("Datasheet Product");
@@ -165,7 +172,7 @@ class ProductControllerTest {
         request.setStockQuantity(5);
         request.setCategoryId(category.getId());
 
-        String json = mockMvc.perform(post("/api/products")
+        String json = mockMvc.perform(post("/api/admin/products")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -176,7 +183,7 @@ class ProductControllerTest {
         MockMultipartFile datasheetFile = new MockMultipartFile(
                 "datasheetFile", "test.pdf", "application/pdf", "test content".getBytes());
 
-        mockMvc.perform(multipart("/api/products/{id}/datasheet", id)
+        mockMvc.perform(multipart("/api/admin/products/{id}/datasheet", id)
                         .file(datasheetFile))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.datasheetFilename").isNotEmpty())
@@ -184,6 +191,34 @@ class ProductControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
+    void updateShouldReturnUpdatedProduct() throws Exception {
+        ProductRequest request = new ProductRequest();
+        request.setName("Original Name");
+        request.setSku("ORIG-001");
+        request.setPrice(10.00);
+        request.setStockQuantity(5);
+        request.setCategoryId(category.getId());
+
+        String json = mockMvc.perform(post("/api/admin/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        Long id = objectMapper.readTree(json).get("id").asLong();
+
+        request.setName("Updated Name");
+        
+        mockMvc.perform(put("/api/admin/products/{id}", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Updated Name"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
     void clearDatasheetShouldRemoveDatasheet() throws Exception {
         ProductRequest request = new ProductRequest();
         request.setName("Clear DS Product");
@@ -192,7 +227,7 @@ class ProductControllerTest {
         request.setStockQuantity(5);
         request.setCategoryId(category.getId());
 
-        String json = mockMvc.perform(post("/api/products")
+        String json = mockMvc.perform(post("/api/admin/products")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -203,14 +238,14 @@ class ProductControllerTest {
         MockMultipartFile datasheetFile = new MockMultipartFile(
                 "datasheetFile", "test.pdf", "application/pdf", "test content".getBytes());
 
-        mockMvc.perform(multipart("/api/products/{id}/datasheet", id)
+        mockMvc.perform(multipart("/api/admin/products/{id}/datasheet", id)
                         .file(datasheetFile))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.datasheetFilename").isNotEmpty());
 
-        mockMvc.perform(multipart("/api/products/{id}/datasheet", id)
+        mockMvc.perform(multipart("/api/admin/products/{id}/datasheet", id)
                         .param("clearDatasheet", "true"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.datasheetFilename").isEmpty());
+                .andExpect(jsonPath("$.datasheetFilename").doesNotExist());
     }
 }

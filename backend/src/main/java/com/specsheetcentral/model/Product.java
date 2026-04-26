@@ -20,6 +20,9 @@ public class Product {
     @Column(nullable = false)
     private Double price;
 
+    @Column
+    private Double costPrice;
+
     @Column(nullable = false)
     private Integer stockQuantity;
 
@@ -33,6 +36,9 @@ public class Product {
 
     @Column(columnDefinition = "TEXT")
     private String imageUrl;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
     @Column(columnDefinition = "TEXT")
     private String datasheetUrl;
@@ -65,6 +71,8 @@ public class Product {
     public void setSku(String sku) { this.sku = sku; }
     public Double getPrice() { return price; }
     public void setPrice(Double price) { this.price = price; }
+    public Double getCostPrice() { return costPrice; }
+    public void setCostPrice(Double costPrice) { this.costPrice = costPrice; }
     public Integer getStockQuantity() { return stockQuantity; }
     public void setStockQuantity(Integer stockQuantity) { this.stockQuantity = stockQuantity; }
     public Category getCategory() { return category; }
@@ -73,6 +81,8 @@ public class Product {
     public void setManufacturer(String manufacturer) { this.manufacturer = manufacturer; }
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
     public String getDatasheetUrl() { return datasheetUrl; }
     public void setDatasheetUrl(String datasheetUrl) { this.datasheetUrl = datasheetUrl; }
     public String getDatasheetFilename() { return datasheetFilename; }
