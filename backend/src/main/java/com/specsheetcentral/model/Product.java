@@ -31,11 +31,14 @@ public class Product {
     @Column
     private String manufacturer;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String imageUrl;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String datasheetUrl;
+
+    @Column
+    private String datasheetFilename;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("product")
@@ -72,6 +75,8 @@ public class Product {
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
     public String getDatasheetUrl() { return datasheetUrl; }
     public void setDatasheetUrl(String datasheetUrl) { this.datasheetUrl = datasheetUrl; }
+    public String getDatasheetFilename() { return datasheetFilename; }
+    public void setDatasheetFilename(String datasheetFilename) { this.datasheetFilename = datasheetFilename; }
     public List<ProductSpec> getSpecs() { return specs; }
     public void setSpecs(List<ProductSpec> specs) { this.specs = specs; }
     public Integer getLowStockThreshold() { return lowStockThreshold; }

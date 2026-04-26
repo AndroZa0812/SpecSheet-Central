@@ -10,6 +10,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -34,6 +35,6 @@ class FileControllerTest {
 
         mockMvc.perform(multipart("/api/files/upload").file(file))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.url").exists());
+                .andExpect(jsonPath("$.url").value(startsWith("/uploads/")));
     }
 }

@@ -12,6 +12,7 @@ public class ProductResponse {
     private String manufacturer;
     private String imageUrl;
     private String datasheetUrl;
+    private String datasheetFilename;
     private Map<String, String> specs;
     private Double rating;
     private Integer reviewCount;
@@ -35,6 +36,8 @@ public class ProductResponse {
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
     public String getDatasheetUrl() { return datasheetUrl; }
     public void setDatasheetUrl(String datasheetUrl) { this.datasheetUrl = datasheetUrl; }
+    public String getDatasheetFilename() { return datasheetFilename; }
+    public void setDatasheetFilename(String datasheetFilename) { this.datasheetFilename = datasheetFilename; }
     public Map<String, String> getSpecs() { return specs; }
     public void setSpecs(Map<String, String> specs) { this.specs = specs; }
     public Double getRating() { return rating; }
