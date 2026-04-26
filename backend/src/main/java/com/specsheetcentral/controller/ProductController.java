@@ -21,7 +21,7 @@ public class ProductController {
     @GetMapping
     public List<ProductResponse> getAll(
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) List<Long> categoryId,
             @RequestParam(required = false) String manufacturer,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice) {

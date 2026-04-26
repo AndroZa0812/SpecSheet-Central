@@ -13,6 +13,9 @@ public class ProductResponse {
     private String imageUrl;
     private String datasheetUrl;
     private Map<String, String> specs;
+    private Double rating;
+    private Integer reviewCount;
+    private Integer lowStockThreshold;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -34,4 +37,10 @@ public class ProductResponse {
     public void setDatasheetUrl(String datasheetUrl) { this.datasheetUrl = datasheetUrl; }
     public Map<String, String> getSpecs() { return specs; }
     public void setSpecs(Map<String, String> specs) { this.specs = specs; }
+    public Double getRating() { return rating; }
+    public void setRating(Double rating) { this.rating = rating; }
+    public Integer getReviewCount() { return reviewCount; }
+    public void setReviewCount(Integer reviewCount) { this.reviewCount = reviewCount; }
+    public Integer getLowStockThreshold() { return lowStockThreshold; }
+    public void setLowStockThreshold(Integer lowStockThreshold) { this.lowStockThreshold = lowStockThreshold; }
 }

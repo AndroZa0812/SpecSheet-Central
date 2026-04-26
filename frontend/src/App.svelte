@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { currentPath } from "./lib/router.js";
+  import { currentPath } from "$lib/router";
   import Route from "./components/Route.svelte";
   import Navbar from "./components/Navbar.svelte";
   import Home from "./routes/Home.svelte";
@@ -10,10 +10,11 @@
   import Compare from "./routes/Compare.svelte";
   import Cart from "./routes/Cart.svelte";
   import Admin from "./routes/Admin.svelte";
+  import { Toaster } from "$lib/components/ui/sonner";
 </script>
 
 <Navbar />
-<main>
+<main class="min-h-[calc(100vh-3.5rem)]">
   <Route path="/" component={Home} />
   <Route path="/login" component={Login} />
   <Route path="/register" component={Register} />
@@ -23,7 +24,4 @@
   <Route path="/cart" component={Cart} />
   <Route path="/admin" component={Admin} />
 </main>
-
-<style>
-  main { min-height: calc(100vh - 56px); }
-</style>
+<Toaster />

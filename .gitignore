@@ -18,3 +18,4 @@ uploads/
 opencode.json
 skills-lock.json
 .agents
+.e2e/

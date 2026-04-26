@@ -4,6 +4,7 @@ import com.specsheetcentral.model.*;
 import com.specsheetcentral.repository.CategoryRepository;
 import com.specsheetcentral.repository.ProductRepository;
 import com.specsheetcentral.repository.ProductSpecRepository;
+import com.specsheetcentral.repository.ReviewRepository;
 import com.specsheetcentral.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -11,6 +12,8 @@ import org.springframework.context.annotation.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.time.LocalDateTime;
 
 @Configuration
 public class DataSeeder {
@@ -21,6 +24,7 @@ public class DataSeeder {
                            ProductRepository products,
                            ProductSpecRepository specs,
                            UserRepository users,
+                           ReviewRepository reviews,
                            PasswordEncoder encoder) {
         return args -> {
             if (categories.count() > 0) return;
@@ -48,6 +52,7 @@ public class DataSeeder {
             p1.setStockQuantity(150);
             p1.setCategory(microcontrollers);
             p1.setManufacturer("Arduino");
+            p1.setImageUrl("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect fill='%230068B8' width='400' height='400'/%3E%3Crect x='120' y='80' width='160' height='240' rx='8' fill='%2300979D'/%3E%3Crect x='140' y='100' width='120' height='80' rx='4' fill='%23111'/%3E%3Ccircle cx='200' cy='140' r='20' fill='%23333'/%3E%3Crect x='140' y='200' width='120' height='10' rx='2' fill='%23fff' opacity='0.3'/%3E%3Crect x='140' y='220' width='80' height='10' rx='2' fill='%23fff' opacity='0.3'/%3E%3Crect x='140' y='240' width='100' height='10' rx='2' fill='%23fff' opacity='0.3'/%3E%3Crect x='140' y='260' width='60' height='10' rx='2' fill='%23fff' opacity='0.3'/%3E%3Ccircle cx='150' cy='300' r='8' fill='%23fff' opacity='0.5'/%3E%3Ccircle cx='250' cy='300' r='8' fill='%23fff' opacity='0.5'/%3E%3C/svg%3E");
             products.save(p1);
 
             ProductSpec s1 = new ProductSpec();
@@ -89,6 +94,7 @@ public class DataSeeder {
             p2.setStockQuantity(85);
             p2.setCategory(microcontrollers);
             p2.setManufacturer("Raspberry Pi");
+            p2.setImageUrl("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect fill='%23C51A4A' width='400' height='400'/%3E%3Crect x='80' y='80' width='240' height='240' rx='12' fill='%231a1a2e'/%3E%3Crect x='100' y='100' width='80' height='80' rx='4' fill='%23333'/%3E%3Crect x='200' y='100' width='100' height='40' rx='4' fill='%23555'/%3E%3Crect x='200' y='160' width='100' height='40' rx='4' fill='%23555'/%3E%3Ccircle cx='140' cy='260' r='30' fill='%23222'/%3E%3Ccircle cx='140' cy='260' r='15' fill='%23444'/%3E%3Crect x='220' y='220' width='60' height='60' rx='4' fill='%23333'/%3E%3Crect x='230' y='230' width='40' height='40' rx='2' fill='%23555'/%3E%3C/svg%3E");
             products.save(p2);
 
             ProductSpec s6 = new ProductSpec();
@@ -116,6 +122,7 @@ public class DataSeeder {
             p3.setStockQuantity(200);
             p3.setCategory(sensors);
             p3.setManufacturer("Aosong");
+            p3.setImageUrl("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect fill='%231B5E20' width='400' height='400'/%3E%3Crect x='140' y='60' width='120' height='280' rx='16' fill='%23fff'/%3E%3Crect x='155' y='80' width='90' height='120' rx='8' fill='%23e0e0e0'/%3E%3Ccircle cx='200' cy='140' r='30' fill='%234CAF50'/%3E%3Ccircle cx='200' cy='140' r='15' fill='%23fff'/%3E%3Ctext x='200' y='250' text-anchor='middle' font-family='sans-serif' font-size='14' fill='%23333'%3EDHT22%3C/text%3E%3Crect x='160' y='270' width='80' height='8' rx='2' fill='%23ccc'/%3E%3Crect x='160' y='285' width='80' height='8' rx='2' fill='%23ccc'/%3E%3Crect x='160' y='300' width='80' height='8' rx='2' fill='%23ccc'/%3E%3Crect x='170' y='320' width='60' height='10' rx='2' fill='%23999'/%3E%3C/svg%3E");
             products.save(p3);
 
             ProductSpec s9 = new ProductSpec();
@@ -143,6 +150,7 @@ public class DataSeeder {
             p4.setStockQuantity(120);
             p4.setCategory(leds);
             p4.setManufacturer("Worldsemi");
+            p4.setImageUrl("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect fill='%231a1a2e' width='400' height='400'/%3E%3Crect x='40' y='180' width='320' height='40' rx='4' fill='%23333'/%3E%3Ccircle cx='80' cy='200' r='12' fill='%23FF0000'/%3E%3Ccircle cx='140' cy='200' r='12' fill='%2300FF00'/%3E%3Ccircle cx='200' cy='200' r='12' fill='%230000FF'/%3E%3Ccircle cx='260' cy='200' r='12' fill='%23FF0000'/%3E%3Ccircle cx='320' cy='200' r='12' fill='%2300FF00'/%3E%3Ccircle cx='80' cy='200' r='6' fill='%23fff' opacity='0.5'/%3E%3Ccircle cx='140' cy='200' r='6' fill='%23fff' opacity='0.5'/%3E%3Ccircle cx='200' cy='200' r='6' fill='%23fff' opacity='0.5'/%3E%3Ccircle cx='260' cy='200' r='6' fill='%23fff' opacity='0.5'/%3E%3Ccircle cx='320' cy='200' r='6' fill='%23fff' opacity='0.5'/%3E%3Crect x='40' y='140' width='320' height='4' fill='%23555'/%3E%3Crect x='40' y='260' width='320' height='4' fill='%23555'/%3E%3Ctext x='200' y='100' text-anchor='middle' font-family='sans-serif' font-size='20' fill='%23fff'%3EWS2812B LED Strip%3C/text%3E%3C/svg%3E");
             products.save(p4);
 
             ProductSpec s12 = new ProductSpec();
@@ -170,6 +178,7 @@ public class DataSeeder {
             p5.setStockQuantity(300);
             p5.setCategory(motors);
             p5.setManufacturer("Generic");
+            p5.setImageUrl("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect fill='%23263238' width='400' height='400'/%3E%3Ccircle cx='200' cy='200' r='100' fill='%23455A64'/%3E%3Ccircle cx='200' cy='200' r='70' fill='%2337474F'/%3E%3Ccircle cx='200' cy='200' r='40' fill='%22546E7A'/%3E%3Ccircle cx='200' cy='200' r='15' fill='%23263238'/%3E%3Cline x1='200' y1='130' x2='200' y2='160' stroke='%2378909C' stroke-width='4'/%3E%3Cline x1='200' y1='240' x2='200' y2='270' stroke='%2378909C' stroke-width='4'/%3E%3Cline x1='130' y1='200' x2='160' y2='200' stroke='%2378909C' stroke-width='4'/%3E%3Cline x1='240' y1='200' x2='270' y2='200' stroke='%2378909C' stroke-width='4'/%3E%3Crect x='170' y='300' width='60' height='30' rx='4' fill='%23455A64'/%3E%3Crect x='180' y='310' width='8' height='10' fill='%2378909C'/%3E%3Crect x='195' y='310' width='8' height='10' fill='%2378909C'/%3E%3Crect x='210' y='310' width='8' height='10' fill='%2378909C'/%3E%3C/svg%3E");
             products.save(p5);
 
             ProductSpec s15 = new ProductSpec();
@@ -197,6 +206,7 @@ public class DataSeeder {
             p6.setStockQuantity(3);
             p6.setCategory(microcontrollers);
             p6.setManufacturer("Espressif");
+            p6.setImageUrl("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect fill='%230D47A1' width='400' height='400'/%3E%3Crect x='130' y='60' width='140' height='280' rx='8' fill='%231565C0'/%3E%3Crect x='150' y='80' width='100' height='100' rx='4' fill='%230D47A1'/%3E%3Crect x='160' y='90' width='80' height='80' rx='2' fill='%231976D2'/%3E%3Ccircle cx='200' cy='130' r='20' fill='%230D47A1'/%3E%3Ccircle cx='200' cy='130' r='10' fill='%2342A5F5'/%3E%3Crect x='150' y='200' width='100' height='8' rx='2' fill='%23fff' opacity='0.3'/%3E%3Crect x='150' y='215' width='70' height='8' rx='2' fill='%23fff' opacity='0.3'/%3E%3Crect x='150' y='230' width='90' height='8' rx='2' fill='%23fff' opacity='0.3'/%3E%3Crect x='150' y='245' width='50' height='8' rx='2' fill='%23fff' opacity='0.3'/%3E%3Crect x='150' y='270' width='100' height='40' rx='4' fill='%230D47A1'/%3E%3Crect x='160' y='280' width='80' height='20' rx='2' fill='%231976D2'/%3E%3Ccircle cx='160' cy='320' r='6' fill='%2342A5F5'/%3E%3Ccircle cx='240' cy='320' r='6' fill='%2342A5F5'/%3E%3C/svg%3E");
             products.save(p6);
 
             ProductSpec s18 = new ProductSpec();
@@ -239,6 +249,46 @@ public class DataSeeder {
                 user.setPasswordHash(encoder.encode(userPassword));
                 user.setRole(User.Role.USER);
                 users.save(user);
+
+                Review r1 = new Review();
+                r1.setProduct(p1);
+                r1.setUser(admin);
+                r1.setRating(5);
+                r1.setComment("Excellent board for beginners!");
+                r1.setCreatedAt(LocalDateTime.now());
+                reviews.save(r1);
+
+                Review r2 = new Review();
+                r2.setProduct(p1);
+                r2.setUser(user);
+                r2.setRating(4);
+                r2.setComment("Great value, reliable performance.");
+                r2.setCreatedAt(LocalDateTime.now());
+                reviews.save(r2);
+
+                Review r3 = new Review();
+                r3.setProduct(p2);
+                r3.setUser(admin);
+                r3.setRating(4);
+                r3.setComment("Powerful single-board computer.");
+                r3.setCreatedAt(LocalDateTime.now());
+                reviews.save(r3);
+
+                Review r4 = new Review();
+                r4.setProduct(p3);
+                r4.setUser(user);
+                r4.setRating(5);
+                r4.setComment("Accurate and easy to use.");
+                r4.setCreatedAt(LocalDateTime.now());
+                reviews.save(r4);
+
+                Review r5 = new Review();
+                r5.setProduct(p6);
+                r5.setUser(admin);
+                r5.setRating(5);
+                r5.setComment("Best ESP32 dev board for the price.");
+                r5.setCreatedAt(LocalDateTime.now());
+                reviews.save(r5);
             } else {
                 log.info("SKIPPED user seeding: SEED_ADMIN_PASSWORD and SEED_USER_PASSWORD env vars not set");
             }

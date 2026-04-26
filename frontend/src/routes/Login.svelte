@@ -1,44 +1,74 @@
 <script lang="ts">
-  import api from "../lib/api.js";
-  import { auth } from "../lib/stores.js";
-  import { navigate } from "../lib/router.js";
-  import type { AuthResponse } from "../lib/types.js";
+  import api from "$lib/api";
+  import { auth } from "$lib/stores";
+  import { navigate } from "$lib/router";
+  import type { AuthResponse } from "$lib/types";
+  import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "$lib/components/ui/card";
+  import { Input } from "$lib/components/ui/input";
+  import { Label } from "$lib/components/ui/label";
+  import { Button } from "$lib/components/ui/button";
+  import { Alert, AlertDescription } from "$lib/components/ui/alert";
+  import { Separator } from "$lib/components/ui/separator";
+  import Link from "../components/Link.svelte";
+  import { AlertCircle, Loader2 } from "lucide-svelte";
 
   let email = $state("");
   let password = $state("");
   let error = $state("");
+  let loading = $state(false);
 
   async function handleSubmit(e: Event) {
     e.preventDefault();
+    error = "";
+    loading = true;
     try {
       const res = await api.post<AuthResponse>("/auth/login", { email, password });
       auth.login({ email: res.data.email, role: res.data.role }, res.data.token);
       navigate("/");
-    } catch (e) {
-      error = (e as any).response?.data?.message || "Login failed";
+    } catch (err) {
+      error = (err as any).response?.data?.message || "Login failed";
+    } finally {
+      loading = false;
     }
   }
 </script>
 
-<div class="auth-page">
-  <div class="auth-card">
-    <h1>Login</h1>
+<div class="flex min-h-[calc(100vh-3.5rem)] items-center justify-center px-4 py-12">
+  <Card class="w-full max-w-sm">
+    <CardHeader>
+      <CardTitle>Login</CardTitle>
+      <CardDescription>Enter your credentials to access your account.</CardDescription>
+    </CardHeader>
     <form onsubmit={handleSubmit}>
-      {#if error}<p class="error">{error}</p>{/if}
-      <input type="email" placeholder="Email" bind:value={email} required />
-      <input type="password" placeholder="Password" bind:value={password} required />
-      <button type="submit">Login</button>
+      <CardContent class="flex flex-col gap-4">
+        {#if error}
+          <Alert variant="destructive">
+            <AlertCircle class="size-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        {/if}
+        <div class="flex flex-col gap-2">
+          <Label for="email">Email</Label>
+          <Input id="email" type="email" bind:value={email} required autocomplete="email" />
+        </div>
+        <div class="flex flex-col gap-2">
+          <Label for="password">Password</Label>
+          <Input id="password" type="password" bind:value={password} required autocomplete="current-password" />
+        </div>
+      </CardContent>
+      <CardFooter class="flex flex-col gap-4">
+        <Button type="submit" class="w-full" disabled={loading}>
+          {#if loading}
+            <Loader2 class="mr-2 size-4 animate-spin" />
+          {/if}
+          Login
+        </Button>
+        <Separator />
+        <p class="text-center text-sm text-muted-foreground">
+          Don't have an account?
+          <Link to="/register" class="font-medium text-primary underline underline-offset-4">Register</Link>
+        </p>
+      </CardFooter>
     </form>
-  </div>
+  </Card>
 </div>
-
-<style>
-  .auth-page { display: flex; justify-content: center; align-items: center; min-height: 80vh; }
-  .auth-card { background: white; padding: 2rem; border-radius: 0.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-  h1 { margin-bottom: 1.5rem; }
-  form { display: flex; flex-direction: column; gap: 1rem; }
-  input { padding: 0.75rem; border: 1px solid var(--gray-200); border-radius: 0.375rem; font-size: 1rem; }
-  button { padding: 0.75rem; background: var(--primary); color: white; border: none; border-radius: 0.375rem; font-size: 1rem; cursor: pointer; }
-  button:hover { background: var(--primary-dark); }
-  .error { color: var(--danger); font-size: 0.9rem; }
-</style>

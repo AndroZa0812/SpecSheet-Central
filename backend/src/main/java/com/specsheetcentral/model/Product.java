@@ -41,6 +41,19 @@ public class Product {
     @JsonIgnoreProperties("product")
     private List<ProductSpec> specs;
 
+    @Column
+    private Integer lowStockThreshold = 10;
+
+    @Column
+    private Double rating;
+
+    @Column
+    private Integer reviewCount = 0;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("product")
+    private List<Review> reviews;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getName() { return name; }
@@ -61,4 +74,12 @@ public class Product {
     public void setDatasheetUrl(String datasheetUrl) { this.datasheetUrl = datasheetUrl; }
     public List<ProductSpec> getSpecs() { return specs; }
     public void setSpecs(List<ProductSpec> specs) { this.specs = specs; }
+    public Integer getLowStockThreshold() { return lowStockThreshold; }
+    public void setLowStockThreshold(Integer lowStockThreshold) { this.lowStockThreshold = lowStockThreshold; }
+    public Double getRating() { return rating; }
+    public void setRating(Double rating) { this.rating = rating; }
+    public Integer getReviewCount() { return reviewCount; }
+    public void setReviewCount(Integer reviewCount) { this.reviewCount = reviewCount; }
+    public List<Review> getReviews() { return reviews; }
+    public void setReviews(List<Review> reviews) { this.reviews = reviews; }
 }

@@ -8,7 +8,9 @@ import com.specsheetcentral.model.ProductSpec;
 import com.specsheetcentral.repository.CategoryRepository;
 import com.specsheetcentral.repository.ProductRepository;
 import com.specsheetcentral.repository.ProductSpecRepository;
+import com.specsheetcentral.repository.ReviewRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +29,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ProductSpecRepository productSpecRepository;
+    private final ReviewRepository reviewRepository;
 
     public ProductService(ProductRepository productRepository,
                           CategoryRepository categoryRepository,
@@ -34,16 +37,28 @@ public class ProductService {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.productSpecRepository = productSpecRepository;
+        this.reviewRepository = null;
     }
 
-    public List<ProductResponse> findAll(String search, Long categoryId, String manufacturer, Double minPrice, Double maxPrice) {
+    @Autowired
+    public ProductService(ProductRepository productRepository,
+                          CategoryRepository categoryRepository,
+                          ProductSpecRepository productSpecRepository,
+                          ReviewRepository reviewRepository) {
+        this.productRepository = productRepository;
+        this.categoryRepository = categoryRepository;
+        this.productSpecRepository = productSpecRepository;
+        this.reviewRepository = reviewRepository;
+    }
+
+    public List<ProductResponse> findAll(String search, List<Long> categoryIds, String manufacturer, Double minPrice, Double maxPrice) {
         Specification<Product> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (search != null && !search.isEmpty()) {
                 predicates.add(cb.like(cb.lower(root.get("name")), "%" + search.toLowerCase() + "%"));
             }
-            if (categoryId != null) {
-                predicates.add(cb.equal(root.get("category").get("id"), categoryId));
+            if (categoryIds != null && !categoryIds.isEmpty()) {
+                predicates.add(root.get("category").get("id").in(categoryIds));
             }
             if (manufacturer != null && !manufacturer.isEmpty()) {
                 predicates.add(cb.equal(cb.lower(root.get("manufacturer")), manufacturer.toLowerCase()));
@@ -82,6 +97,7 @@ public class ProductService {
         product.setManufacturer(request.getManufacturer());
         product.setImageUrl(request.getImageUrl());
         product.setDatasheetUrl(request.getDatasheetUrl());
+        product.setLowStockThreshold(request.getLowStockThreshold() != null ? request.getLowStockThreshold() : 10);
 
         Product saved = productRepository.save(product);
 
@@ -118,6 +134,7 @@ public class ProductService {
         product.setManufacturer(request.getManufacturer());
         product.setImageUrl(request.getImageUrl());
         product.setDatasheetUrl(request.getDatasheetUrl());
+        product.setLowStockThreshold(request.getLowStockThreshold() != null ? request.getLowStockThreshold() : 10);
 
         productSpecRepository.deleteAll(product.getSpecs());
 
@@ -151,6 +168,17 @@ public class ProductService {
         return toResponse(productRepository.save(product));
     }
 
+    @Transactional
+    public void recalculateProductRating(Long productId) {
+        Product product = productRepository.findById(productId)
+            .orElseThrow(() -> new EntityNotFoundException(PRODUCT_NOT_FOUND));
+
+        Double avg = reviewRepository.averageRatingByProductId(productId);
+        product.setRating(avg);
+        product.setReviewCount(reviewRepository.countByProductId(productId));
+        productRepository.save(product);
+    }
+
     private ProductResponse toResponse(Product product) {
         ProductResponse response = new ProductResponse();
         response.setId(product.getId());
@@ -167,6 +195,9 @@ public class ProductService {
                 .collect(Collectors.toMap(ProductSpec::getSpecKey, ProductSpec::getSpecValue));
             response.setSpecs(specs);
         }
+        response.setRating(product.getRating());
+        response.setReviewCount(product.getReviewCount());
+        response.setLowStockThreshold(product.getLowStockThreshold());
         return response;
     }
 }

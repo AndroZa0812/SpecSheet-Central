@@ -12,6 +12,7 @@ public class ProductRequest {
     private String imageUrl;
     private String datasheetUrl;
     private Map<String, String> specs;
+    private Integer lowStockThreshold;
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -31,4 +32,6 @@ public class ProductRequest {
     public void setDatasheetUrl(String datasheetUrl) { this.datasheetUrl = datasheetUrl; }
     public Map<String, String> getSpecs() { return specs; }
     public void setSpecs(Map<String, String> specs) { this.specs = specs; }
+    public Integer getLowStockThreshold() { return lowStockThreshold; }
+    public void setLowStockThreshold(Integer lowStockThreshold) { this.lowStockThreshold = lowStockThreshold; }
 }
