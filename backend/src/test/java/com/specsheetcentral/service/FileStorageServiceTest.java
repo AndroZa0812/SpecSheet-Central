@@ -9,14 +9,22 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockConstruction;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class FileStorageServiceTest {
 
@@ -187,6 +195,52 @@ class FileStorageServiceTest {
             assertThatThrownBy(() -> fileStorageService.fetchAndStore(url))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Not a PDF");
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void fetchAndStore_shouldSetConnectionAndReadTimeouts() throws IOException {
+        HttpURLConnection connMock = mock(HttpURLConnection.class);
+        when(connMock.getResponseCode()).thenReturn(200);
+        when(connMock.getContentType()).thenReturn("application/pdf");
+        InputStream dummyIn = new ByteArrayInputStream("pdf-content".getBytes());
+        when(connMock.getInputStream()).thenReturn(dummyIn);
+
+        try (var mocked = mockConstruction(URL.class,
+                (mock, context) -> when(mock.openConnection()).thenReturn(connMock))) {
+
+            String filename = fileStorageService.fetchAndStore("http://example.com/test.pdf");
+
+            assertThat(filename).endsWith(".pdf");
+            assertThat(tempDir.resolve(filename)).exists();
+        }
+
+        verify(connMock).setConnectTimeout(10_000);
+        verify(connMock).setReadTimeout(30_000);
+    }
+
+    @Test
+    void fetchAndStore_shouldAllowNullContentType() throws IOException {
+        HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext("/no-content-type.pdf", (HttpExchange exchange) -> {
+            byte[] response = "pdf-content".getBytes();
+            exchange.sendResponseHeaders(200, response.length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(response);
+            }
+        });
+        server.start();
+        int port = server.getAddress().getPort();
+        try {
+            String url = "http://localhost:" + port + "/no-content-type.pdf";
+
+            String filename = fileStorageService.fetchAndStore(url);
+
+            assertThat(filename).endsWith(".pdf");
+            assertThat(tempDir.resolve(filename)).exists();
+            assertThat(Files.readString(tempDir.resolve(filename))).isEqualTo("pdf-content");
         } finally {
             server.stop(0);
         }

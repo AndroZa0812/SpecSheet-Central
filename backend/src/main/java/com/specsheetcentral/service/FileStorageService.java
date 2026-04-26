@@ -59,7 +59,7 @@ public class FileStorageService {
             }
 
             String contentType = connection.getContentType();
-            if (contentType == null || !contentType.toLowerCase().contains("pdf")) {
+            if (contentType != null && !contentType.toLowerCase().contains("pdf")) {
                 throw new IllegalArgumentException("Not a PDF: Content-Type is " + contentType);
             }
 
