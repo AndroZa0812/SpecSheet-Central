@@ -3,8 +3,10 @@ package com.specsheetcentral.controller;
 import com.specsheetcentral.dto.ProductRequest;
 import com.specsheetcentral.dto.ProductResponse;
 import com.specsheetcentral.service.ProductService;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -52,5 +54,14 @@ public class ProductController {
     @PatchMapping("/{id}/stock")
     public ProductResponse updateStock(@PathVariable Long id, @RequestParam Integer quantity) {
         return productService.updateStock(id, quantity);
+    }
+
+    @PostMapping(value = "/{id}/datasheet", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ProductResponse uploadDatasheet(
+            @PathVariable Long id,
+            @RequestParam(value = "datasheetFile", required = false) MultipartFile datasheetFile,
+            @RequestParam(value = "datasheetUrl", required = false) String datasheetUrl,
+            @RequestParam(value = "clearDatasheet", required = false, defaultValue = "false") boolean clearDatasheet) {
+        return productService.updateDatasheet(id, datasheetFile, datasheetUrl, clearDatasheet);
     }
 }

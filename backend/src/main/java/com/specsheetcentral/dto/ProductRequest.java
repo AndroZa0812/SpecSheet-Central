@@ -1,5 +1,7 @@
 package com.specsheetcentral.dto;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.Map;
 
 public class ProductRequest {
@@ -13,6 +15,8 @@ public class ProductRequest {
     private String datasheetUrl;
     private Map<String, String> specs;
     private Integer lowStockThreshold;
+    private MultipartFile datasheetFile;
+    private boolean clearDatasheet;
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -34,4 +38,8 @@ public class ProductRequest {
     public void setSpecs(Map<String, String> specs) { this.specs = specs; }
     public Integer getLowStockThreshold() { return lowStockThreshold; }
     public void setLowStockThreshold(Integer lowStockThreshold) { this.lowStockThreshold = lowStockThreshold; }
+    public MultipartFile getDatasheetFile() { return datasheetFile; }
+    public void setDatasheetFile(MultipartFile datasheetFile) { this.datasheetFile = datasheetFile; }
+    public boolean isClearDatasheet() { return clearDatasheet; }
+    public void setClearDatasheet(boolean clearDatasheet) { this.clearDatasheet = clearDatasheet; }
 }

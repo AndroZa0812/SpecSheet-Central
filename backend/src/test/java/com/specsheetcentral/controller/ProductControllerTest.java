@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -153,5 +154,63 @@ class ProductControllerTest {
         mockMvc.perform(get("/api/products/{id}", id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Find Me"));
+    }
+
+    @Test
+    void uploadDatasheetShouldStoreFile() throws Exception {
+        ProductRequest request = new ProductRequest();
+        request.setName("Datasheet Product");
+        request.setSku("DS-001");
+        request.setPrice(10.00);
+        request.setStockQuantity(5);
+        request.setCategoryId(category.getId());
+
+        String json = mockMvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        Long id = objectMapper.readTree(json).get("id").asLong();
+
+        MockMultipartFile datasheetFile = new MockMultipartFile(
+                "datasheetFile", "test.pdf", "application/pdf", "test content".getBytes());
+
+        mockMvc.perform(multipart("/api/products/{id}/datasheet", id)
+                        .file(datasheetFile))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.datasheetFilename").isNotEmpty())
+                .andExpect(jsonPath("$.datasheetUrl").value(org.hamcrest.Matchers.startsWith("/uploads/")));
+    }
+
+    @Test
+    void clearDatasheetShouldRemoveDatasheet() throws Exception {
+        ProductRequest request = new ProductRequest();
+        request.setName("Clear DS Product");
+        request.setSku("CLR-001");
+        request.setPrice(10.00);
+        request.setStockQuantity(5);
+        request.setCategoryId(category.getId());
+
+        String json = mockMvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        Long id = objectMapper.readTree(json).get("id").asLong();
+
+        MockMultipartFile datasheetFile = new MockMultipartFile(
+                "datasheetFile", "test.pdf", "application/pdf", "test content".getBytes());
+
+        mockMvc.perform(multipart("/api/products/{id}/datasheet", id)
+                        .file(datasheetFile))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.datasheetFilename").isNotEmpty());
+
+        mockMvc.perform(multipart("/api/products/{id}/datasheet", id)
+                        .param("clearDatasheet", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.datasheetFilename").isEmpty());
     }
 }
