@@ -15,6 +15,7 @@ export interface ProductResponse {
   manufacturer: string | null;
   imageUrl: string | null;
   datasheetUrl: string | null;
+  datasheetFilename: string | null;
   specs: Record<string, string> | null;
   description: string | null;
   rating: number;

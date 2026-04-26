@@ -1,6 +1,6 @@
 import axios from "axios";
 import type { AxiosInstance } from "axios";
-import type { Review } from "./types";
+import type { Review, ProductResponse } from "./types";
 
 const api: AxiosInstance = axios.create({
   baseURL: "/api",
@@ -43,6 +43,19 @@ export async function updateReview(reviewId: number, review: { rating: number; c
 
 export async function deleteReview(reviewId: number) {
   return api.delete(`/reviews/${reviewId}`);
+}
+
+export async function uploadDatasheet(
+  productId: number,
+  file: File | null,
+  url: string | null,
+  clear: boolean,
+) {
+  const formData = new FormData();
+  if (file) formData.append("datasheetFile", file);
+  if (url) formData.append("datasheetUrl", url);
+  if (clear) formData.append("clearDatasheet", "true");
+  return api.post<ProductResponse>(`/products/${productId}/datasheet`, formData);
 }
 
 export default api;

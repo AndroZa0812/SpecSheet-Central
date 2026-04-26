@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import api from "$lib/api";
+  import api, { uploadDatasheet } from "$lib/api";
   import type { ProductResponse, Category } from "$lib/types";
   import {
     Dialog,
@@ -20,7 +20,7 @@
     SelectTrigger,
   } from "$lib/components/ui/select";
   import { Separator } from "$lib/components/ui/separator";
-  import { Plus, X } from "lucide-svelte";
+  import { Plus, X, FileText, Link } from "lucide-svelte";
   import { toast } from "svelte-sonner";
 
   interface Props {
@@ -41,11 +41,13 @@
     categoryId: "",
     manufacturer: "",
     imageUrl: "",
-    datasheetUrl: "",
     description: "",
     specs: [] as { key: string; value: string }[],
   });
 
+  let datasheetFile: File | null = $state(null);
+  let datasheetUrlInput = $state("");
+  let clearDatasheet = $state(false);
   let saving = $state(false);
 
   onMount(() => {
@@ -59,7 +61,6 @@
         categoryId: String(product.categoryId || ""),
         manufacturer: product.manufacturer || "",
         imageUrl: product.imageUrl || "",
-        datasheetUrl: product.datasheetUrl || "",
         description: product.description || "",
         specs: Object.entries(product.specs || {}).map(([k, v]) => ({ key: k, value: v })),
       };
@@ -77,6 +78,25 @@
     form.specs = form.specs.filter((_, i) => i !== index);
   }
 
+  function handleFileChange(e: Event) {
+    const target = e.target as HTMLInputElement;
+    datasheetFile = target.files?.[0] ?? null;
+    if (datasheetFile) {
+      datasheetUrlInput = "";
+      clearDatasheet = false;
+    }
+  }
+
+  function handleClearDatasheet() {
+    clearDatasheet = true;
+    datasheetFile = null;
+    datasheetUrlInput = "";
+  }
+
+  function handleUndoClear() {
+    clearDatasheet = false;
+  }
+
   async function handleSubmit(e: Event) {
     e.preventDefault();
     saving = true;
@@ -89,7 +109,6 @@
       categoryId: parseInt(form.categoryId),
       manufacturer: form.manufacturer,
       imageUrl: form.imageUrl,
-      datasheetUrl: form.datasheetUrl,
       description: form.description,
       specs: Object.fromEntries(
         form.specs.filter((s) => s.key).map((s) => [s.key, s.value]),
@@ -97,13 +116,25 @@
     };
 
     try {
+      let savedProduct: ProductResponse;
       if (product) {
-        await api.put(`/products/${product.id}`, data);
-        toast.success("Product updated");
+        const res = await api.put<ProductResponse>(`/products/${product.id}`, data);
+        savedProduct = res.data;
       } else {
-        await api.post("/products", data);
-        toast.success("Product created");
+        const res = await api.post<ProductResponse>("/products", data);
+        savedProduct = res.data;
       }
+
+      if (datasheetFile || datasheetUrlInput || clearDatasheet) {
+        await uploadDatasheet(
+          savedProduct.id,
+          datasheetFile,
+          datasheetUrlInput || null,
+          clearDatasheet,
+        );
+      }
+
+      toast.success(product ? "Product updated" : "Product created");
       onsave();
     } catch (err) {
       toast.error((err as any).response?.data?.message || "Save failed");
@@ -169,15 +200,53 @@
           <Label for="image">Image URL</Label>
           <Input id="image" bind:value={form.imageUrl} />
         </div>
-        <div class="flex flex-col gap-2">
-          <Label for="datasheet">Datasheet URL</Label>
-          <Input id="datasheet" bind:value={form.datasheetUrl} />
-        </div>
       </div>
 
       <div class="flex flex-col gap-2">
         <Label for="description">Description</Label>
         <Input id="description" bind:value={form.description} />
+      </div>
+
+      <Separator />
+
+      <div class="flex flex-col gap-2">
+        <Label>Datasheet</Label>
+        {#if product?.datasheetFilename && !clearDatasheet}
+          <div class="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
+            <FileText class="size-4 text-muted-foreground" />
+            <span class="flex-1 truncate">{product.datasheetFilename}</span>
+            <Button type="button" variant="ghost" size="sm" class="text-destructive" onclick={handleClearDatasheet}>
+              <X class="mr-1 size-3.5" />
+              Remove
+            </Button>
+          </div>
+        {:else if clearDatasheet}
+          <div class="flex items-center gap-2 rounded-md border border-destructive/50 px-3 py-2 text-sm text-destructive">
+            <span class="flex-1">Datasheet will be removed on save</span>
+            <Button type="button" variant="ghost" size="sm" onclick={handleUndoClear}>
+              Undo
+            </Button>
+          </div>
+        {:else}
+          <div class="flex flex-col gap-2">
+            <Input id="datasheet-file" type="file" accept=".pdf" onchange={handleFileChange} />
+            {#if datasheetFile}
+              <p class="text-xs text-muted-foreground">Selected: {datasheetFile.name}</p>
+            {:else}
+              <p class="text-xs text-muted-foreground">Upload a PDF file</p>
+            {/if}
+            <div class="flex items-center gap-2">
+              <div class="flex-1 border-t"></div>
+              <span class="text-xs text-muted-foreground">or</span>
+              <div class="flex-1 border-t"></div>
+            </div>
+            <div class="flex items-center gap-2">
+              <Link class="size-4 text-muted-foreground shrink-0" />
+              <Input id="datasheet-url" placeholder="https://example.com/datasheet.pdf" bind:value={datasheetUrlInput} />
+            </div>
+            <p class="text-xs text-muted-foreground">The PDF will be fetched and stored locally.</p>
+          </div>
+        {/if}
       </div>
 
       <Separator />
