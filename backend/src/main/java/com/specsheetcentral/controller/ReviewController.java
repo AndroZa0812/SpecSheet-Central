@@ -15,8 +15,9 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*")
 public class ReviewController {
+    private static final String USER_NOT_FOUND = "User not found";
+
     private final ReviewService reviewService;
     private final UserRepository userRepository;
 
@@ -30,7 +31,7 @@ public class ReviewController {
                                  @AuthenticationPrincipal UserDetails userDetails,
                                  @Valid @RequestBody ReviewRequest request) {
         User user = userRepository.findByEmail(userDetails.getUsername())
-            .orElseThrow(() -> new EntityNotFoundException("User not found"));
+            .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
         return reviewService.createReview(productId, user.getId(), request);
     }
 
@@ -44,7 +45,7 @@ public class ReviewController {
                                  @AuthenticationPrincipal UserDetails userDetails,
                                  @Valid @RequestBody ReviewRequest request) {
         User user = userRepository.findByEmail(userDetails.getUsername())
-            .orElseThrow(() -> new EntityNotFoundException("User not found"));
+            .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
         return reviewService.updateReview(reviewId, user.getId(), request);
     }
 
@@ -52,7 +53,7 @@ public class ReviewController {
     public void delete(@PathVariable Long reviewId,
                        @AuthenticationPrincipal UserDetails userDetails) {
         User user = userRepository.findByEmail(userDetails.getUsername())
-            .orElseThrow(() -> new EntityNotFoundException("User not found"));
+            .orElseThrow(() -> new EntityNotFoundException(USER_NOT_FOUND));
         boolean isAdmin = userDetails.getAuthorities().stream()
             .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         reviewService.deleteReview(reviewId, user.getId(), isAdmin);

@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -15,11 +16,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
-
-    private static final String API_PRODUCTS = "/api/products/**";
-    private static final String API_CATEGORIES = "/api/categories/**";
-    private static final String ADMIN_ROLE = "ADMIN";
 
     private final JwtFilter jwtFilter;
 
@@ -35,14 +33,13 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/api/auth/**").permitAll()
-                    .requestMatchers(HttpMethod.GET, API_PRODUCTS, API_CATEGORIES).permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**").permitAll()
                     .requestMatchers("/uploads/**").permitAll()
+                    .requestMatchers("/api/admin/**").hasRole("ADMIN")
                     .requestMatchers(HttpMethod.POST, "/api/products/*/reviews").authenticated()
-                    .requestMatchers(HttpMethod.POST, API_PRODUCTS, API_CATEGORIES).hasRole(ADMIN_ROLE)
-                    .requestMatchers(HttpMethod.PUT, API_PRODUCTS, API_CATEGORIES).hasRole(ADMIN_ROLE)
-                    .requestMatchers(HttpMethod.PATCH, API_PRODUCTS).hasRole(ADMIN_ROLE)
-                    .requestMatchers(HttpMethod.DELETE, API_PRODUCTS, API_CATEGORIES).hasRole(ADMIN_ROLE)
                     .requestMatchers("/api/orders/**").authenticated()
+                    .requestMatchers("/api/reviews/**").authenticated()
+                    .requestMatchers("/api/files/**").authenticated()
                     .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

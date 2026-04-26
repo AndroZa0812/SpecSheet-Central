@@ -114,7 +114,7 @@ class ProductControllerTest {
     @Test
     void updateStockShouldReturnUpdatedProduct() throws Exception {
         ProductRequest request = new ProductRequest();
-        request.setName("Stock ITem");
+        request.setName("Stock Item");
         request.setSku("STK-001");
         request.setPrice(15.00);
         request.setStockQuantity(5);

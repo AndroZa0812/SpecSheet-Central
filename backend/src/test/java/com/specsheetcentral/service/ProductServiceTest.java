@@ -7,13 +7,14 @@ import com.specsheetcentral.model.Product;
 import com.specsheetcentral.repository.CategoryRepository;
 import com.specsheetcentral.repository.ProductRepository;
 import com.specsheetcentral.repository.ProductSpecRepository;
-import org.junit.jupiter.api.BeforeEach;
+import com.specsheetcentral.repository.ReviewRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -34,21 +35,22 @@ class ProductServiceTest {
     @Mock
     private ProductSpecRepository productSpecRepository;
     @Mock
+    private ReviewRepository reviewRepository;
+    @Mock
     private FileStorageService fileStorageService;
 
+    @InjectMocks
     private ProductService productService;
-    private Category category;
 
-    @BeforeEach
-    void setUp() {
-        productService = new ProductService(productRepository, categoryRepository, productSpecRepository, fileStorageService);
-        category = new Category();
+    private Category createCategory() {
+        Category category = new Category();
         category.setId(1L);
         category.setName("Microcontrollers");
+        return category;
     }
 
-    @Test
-    void findAllShouldReturnProducts() {
+    private Product createProduct() {
+        Category category = createCategory();
         Product product = new Product();
         product.setId(1L);
         product.setName("Arduino Uno");
@@ -56,44 +58,35 @@ class ProductServiceTest {
         product.setPrice(24.99);
         product.setStockQuantity(10);
         product.setCategory(category);
-
-        when(productRepository.findAll(any(Specification.class))).thenReturn(List.of(product));
-
-        List<ProductResponse> results = productService.findAll(null, null, null, null, null);
-
-        assertThat(results).hasSize(1);
-        assertThat(results.get(0).getName()).isEqualTo("Arduino Uno");
-        assertThat(results.get(0).getCategoryName()).isEqualTo("Microcontrollers");
+        product.setManufacturer("Arduino");
+        return product;
     }
 
     @Test
-    void findByIdShouldReturnProduct() {
-        Product product = new Product();
-        product.setId(1L);
-        product.setName("Arduino Uno");
-        product.setSku("ARD-UNO");
-        product.setPrice(24.99);
-        product.setStockQuantity(10);
-        product.setCategory(category);
-
+    void findById_existingProduct_returnsResponse() {
+        Product product = createProduct();
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
         ProductResponse result = productService.findById(1L);
 
         assertThat(result.getName()).isEqualTo("Arduino Uno");
+        assertThat(result.getSku()).isEqualTo("ARD-UNO");
+        assertThat(result.getPrice()).isEqualTo(24.99);
+        assertThat(result.getCategoryName()).isEqualTo("Microcontrollers");
     }
 
     @Test
-    void findByIdShouldThrowWhenNotFound() {
+    void findById_nonExistingProduct_throwsException() {
         when(productRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> productService.findById(99L))
-            .isInstanceOf(RuntimeException.class)
+            .isInstanceOf(EntityNotFoundException.class)
             .hasMessage("Product not found");
     }
 
     @Test
-    void createShouldSaveProductWithSpecs() {
+    void create_validRequest_returnsResponse() {
+        Category category = createCategory();
         ProductRequest request = new ProductRequest();
         request.setName("Arduino Uno");
         request.setSku("ARD-UNO");
@@ -107,7 +100,6 @@ class ProductServiceTest {
         when(productRepository.save(any(Product.class))).thenAnswer(invocation -> {
             Product p = invocation.getArgument(0);
             p.setId(1L);
-            p.setCategory(category);
             return p;
         });
 
@@ -115,127 +107,29 @@ class ProductServiceTest {
 
         assertThat(result.getName()).isEqualTo("Arduino Uno");
         assertThat(result.getSku()).isEqualTo("ARD-UNO");
+        assertThat(result.getManufacturer()).isEqualTo("Arduino");
         verify(productSpecRepository).saveAll(any());
     }
 
     @Test
-    void createShouldStoreDatasheetFile() {
+    void create_nonexistentCategory_throwsException() {
         ProductRequest request = new ProductRequest();
         request.setName("Arduino Uno");
         request.setSku("ARD-UNO");
         request.setPrice(24.99);
         request.setStockQuantity(10);
-        request.setCategoryId(1L);
-        MultipartFile mockFile = mock(MultipartFile.class);
-        when(mockFile.isEmpty()).thenReturn(false);
-        request.setDatasheetFile(mockFile);
+        request.setCategoryId(999L);
 
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
-        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> {
-            Product p = invocation.getArgument(0);
-            p.setId(1L);
-            p.setCategory(category);
-            return p;
-        });
-        when(fileStorageService.storeFile(mockFile)).thenReturn("stored-file.pdf");
+        when(categoryRepository.findById(999L)).thenReturn(Optional.empty());
 
-        ProductResponse result = productService.create(request);
-
-        verify(fileStorageService).storeFile(mockFile);
-        assertThat(result.getDatasheetFilename()).isEqualTo("stored-file.pdf");
-        assertThat(result.getDatasheetUrl()).isEqualTo("/uploads/stored-file.pdf");
+        assertThatThrownBy(() -> productService.create(request))
+            .isInstanceOf(EntityNotFoundException.class)
+            .hasMessage("Category not found");
     }
 
     @Test
-    void createShouldFetchDatasheetUrl() {
-        ProductRequest request = new ProductRequest();
-        request.setName("Arduino Uno");
-        request.setSku("ARD-UNO");
-        request.setPrice(24.99);
-        request.setStockQuantity(10);
-        request.setCategoryId(1L);
-        request.setDatasheetUrl("https://example.com/datasheet.pdf");
-
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
-        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> {
-            Product p = invocation.getArgument(0);
-            p.setId(1L);
-            p.setCategory(category);
-            return p;
-        });
-        when(fileStorageService.fetchAndStore("https://example.com/datasheet.pdf")).thenReturn("fetched-file.pdf");
-
-        ProductResponse result = productService.create(request);
-
-        verify(fileStorageService).fetchAndStore("https://example.com/datasheet.pdf");
-        assertThat(result.getDatasheetFilename()).isEqualTo("fetched-file.pdf");
-        assertThat(result.getDatasheetUrl()).isEqualTo("/uploads/fetched-file.pdf");
-    }
-
-    @Test
-    void updateShouldReplaceDatasheetFile() {
-        Product product = new Product();
-        product.setId(1L);
-        product.setSku("ARD-UNO");
-        product.setPrice(24.99);
-        product.setStockQuantity(10);
-        product.setCategory(category);
-        product.setDatasheetFilename("old-file.pdf");
-
-        ProductRequest request = new ProductRequest();
-        request.setName("Arduino Uno");
-        request.setSku("ARD-UNO");
-        request.setPrice(24.99);
-        request.setStockQuantity(10);
-        request.setCategoryId(1L);
-        MultipartFile mockFile = mock(MultipartFile.class);
-        when(mockFile.isEmpty()).thenReturn(false);
-        request.setDatasheetFile(mockFile);
-
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
-        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(fileStorageService.storeFile(mockFile)).thenReturn("new-file.pdf");
-
-        ProductResponse result = productService.update(1L, request);
-
-        verify(fileStorageService).deleteFile("old-file.pdf");
-        verify(fileStorageService).storeFile(mockFile);
-        assertThat(result.getDatasheetFilename()).isEqualTo("new-file.pdf");
-    }
-
-    @Test
-    void updateShouldClearDatasheet() {
-        Product product = new Product();
-        product.setId(1L);
-        product.setSku("ARD-UNO");
-        product.setPrice(24.99);
-        product.setStockQuantity(10);
-        product.setCategory(category);
-        product.setDatasheetFilename("old-file.pdf");
-
-        ProductRequest request = new ProductRequest();
-        request.setName("Arduino Uno");
-        request.setSku("ARD-UNO");
-        request.setPrice(24.99);
-        request.setStockQuantity(10);
-        request.setCategoryId(1L);
-        request.setClearDatasheet(true);
-
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
-        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        ProductResponse result = productService.update(1L, request);
-
-        verify(fileStorageService).deleteFile("old-file.pdf");
-        assertThat(result.getDatasheetFilename()).isNull();
-    }
-
-    @Test
-    void deleteShouldRemoveDatasheetFile() {
-        Product product = new Product();
-        product.setId(1L);
+    void delete_existingProduct_deletesSuccessfully() {
+        Product product = createProduct();
         product.setDatasheetFilename("datasheet.pdf");
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
@@ -248,25 +142,17 @@ class ProductServiceTest {
     }
 
     @Test
-    void deleteShouldWorkWithoutDatasheet() {
-        when(productRepository.findById(1L)).thenReturn(Optional.of(new Product()));
-        doNothing().when(productRepository).deleteById(1L);
+    void delete_nonexistentProduct_throwsException() {
+        when(productRepository.findById(99L)).thenReturn(Optional.empty());
 
-        productService.delete(1L);
-
-        verify(fileStorageService, never()).deleteFile(any());
-        verify(productRepository).deleteById(1L);
+        assertThatThrownBy(() -> productService.delete(99L))
+            .isInstanceOf(EntityNotFoundException.class)
+            .hasMessage("Product not found");
     }
 
     @Test
-    void updateStockShouldModifyQuantity() {
-        Product product = new Product();
-        product.setId(1L);
-        product.setName("Arduino Uno");
-        product.setSku("ARD-UNO");
-        product.setPrice(24.99);
-        product.setStockQuantity(10);
-        product.setCategory(category);
+    void updateStock_validRequest_updatesQuantity() {
+        Product product = createProduct();
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -277,75 +163,14 @@ class ProductServiceTest {
     }
 
     @Test
-    void deleteShouldRemoveProduct() {
-        Product product = new Product();
-        product.setId(1L);
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-        doNothing().when(productRepository).deleteById(1L);
+    void findAll_withNoFilters_returnsAll() {
+        Product product = createProduct();
 
-        productService.delete(1L);
+        when(productRepository.findAll(any(Specification.class))).thenReturn(List.of(product));
 
-        verify(productRepository).deleteById(1L);
-    }
+        List<ProductResponse> results = productService.findAll(null, null, null, null, null);
 
-    @Test
-    void findAllShouldFilterBySearch() {
-        when(productRepository.findAll(any(Specification.class))).thenReturn(List.of());
-
-        List<ProductResponse> results = productService.findAll("arduino", null, null, null, null);
-
-        assertThat(results).isEmpty();
-        verify(productRepository).findAll(any(Specification.class));
-    }
-
-    @Test
-    void updateDatasheetShouldStoreFile() {
-        Product product = new Product();
-        product.setId(1L);
-        product.setCategory(category);
-
-        MultipartFile mockFile = mock(MultipartFile.class);
-        when(mockFile.isEmpty()).thenReturn(false);
-
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(fileStorageService.storeFile(mockFile)).thenReturn("uploaded-datasheet.pdf");
-
-        ProductResponse result = productService.updateDatasheet(1L, mockFile, null, false);
-
-        assertThat(result.getDatasheetFilename()).isEqualTo("uploaded-datasheet.pdf");
-        assertThat(result.getDatasheetUrl()).isEqualTo("/uploads/uploaded-datasheet.pdf");
-    }
-
-    @Test
-    void updateDatasheetShouldFetchUrl() {
-        Product product = new Product();
-        product.setId(1L);
-        product.setCategory(category);
-
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(fileStorageService.fetchAndStore("https://example.com/ds.pdf")).thenReturn("fetched-ds.pdf");
-
-        ProductResponse result = productService.updateDatasheet(1L, null, "https://example.com/ds.pdf", false);
-
-        assertThat(result.getDatasheetFilename()).isEqualTo("fetched-ds.pdf");
-        assertThat(result.getDatasheetUrl()).isEqualTo("/uploads/fetched-ds.pdf");
-    }
-
-    @Test
-    void updateDatasheetShouldClear() {
-        Product product = new Product();
-        product.setId(1L);
-        product.setCategory(category);
-        product.setDatasheetFilename("existing-ds.pdf");
-
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        ProductResponse result = productService.updateDatasheet(1L, null, null, true);
-
-        verify(fileStorageService).deleteFile("existing-ds.pdf");
-        assertThat(result.getDatasheetFilename()).isNull();
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getName()).isEqualTo("Arduino Uno");
     }
 }

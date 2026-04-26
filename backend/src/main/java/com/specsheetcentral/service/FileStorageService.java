@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.*;
 import java.util.Objects;
@@ -15,13 +17,18 @@ import java.util.UUID;
 
 @Service
 public class FileStorageService {
+    private static final String UPLOADS_PATH_PREFIX = "/uploads/";
+
     @Value("${file.upload-dir}")
     private String uploadDir;
+
+    @Value("${file.allow-internal-urls:false}")
+    private boolean allowInternalUrls;
 
     public String store(final MultipartFile file) {
         Objects.requireNonNull(file, "File must not be null");
         final String filename = storeFile(file);
-        return "/uploads/" + filename;
+        return UPLOADS_PATH_PREFIX + filename;
     }
 
     public String storeFile(final MultipartFile file) {
@@ -53,10 +60,11 @@ public class FileStorageService {
     public String fetchAndStore(final String url) {
         Objects.requireNonNull(url, "URL must not be null");
         try {
-            final URL urlObj = new URL(url);
+            final URL urlObj = URI.create(url).toURL();
             if (!"http".equalsIgnoreCase(urlObj.getProtocol()) && !"https".equalsIgnoreCase(urlObj.getProtocol())) {
                 throw new IllegalArgumentException("Only HTTP and HTTPS URLs are supported");
             }
+            validateNotInternalUrl(urlObj);
             final HttpURLConnection connection = (HttpURLConnection) urlObj.openConnection();
             connection.setInstanceFollowRedirects(false);
             connection.setConnectTimeout(10_000);
@@ -85,6 +93,17 @@ public class FileStorageService {
             return filename;
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to fetch PDF from URL", e);
+        }
+    }
+
+    private void validateNotInternalUrl(final URL url) throws IOException {
+        if (allowInternalUrls) {
+            return;
+        }
+        final InetAddress resolved = InetAddress.getByName(url.getHost());
+        if (resolved.isLoopbackAddress() || resolved.isSiteLocalAddress()
+                || resolved.isLinkLocalAddress() || resolved.isAnyLocalAddress()) {
+            throw new IllegalArgumentException("URLs pointing to internal networks are not allowed");
         }
     }
 

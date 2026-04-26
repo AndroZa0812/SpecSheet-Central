@@ -11,7 +11,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
-@CrossOrigin(origins = "*")
 public class OrderController {
     private final OrderService orderService;
 
@@ -21,7 +20,7 @@ public class OrderController {
 
     @PostMapping
     public OrderResponse create(@AuthenticationPrincipal UserDetails user,
-                                @RequestBody OrderRequest request) {
+                                 @RequestBody OrderRequest request) {
         return orderService.create(user.getUsername(), request);
     }
 

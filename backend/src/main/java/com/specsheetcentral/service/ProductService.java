@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 public class ProductService {
 
     private static final String PRODUCT_NOT_FOUND = "Product not found";
+    private static final String UPLOADS_PATH_PREFIX = "/uploads/";
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
@@ -107,11 +108,11 @@ public class ProductService {
         if (request.getDatasheetFile() != null && !request.getDatasheetFile().isEmpty()) {
             String filename = fileStorageService.storeFile(request.getDatasheetFile());
             product.setDatasheetFilename(filename);
-            product.setDatasheetUrl("/uploads/" + filename);
+            product.setDatasheetUrl(UPLOADS_PATH_PREFIX + filename);
         } else if (request.getDatasheetUrl() != null && !request.getDatasheetUrl().isBlank()) {
             String filename = fileStorageService.fetchAndStore(request.getDatasheetUrl());
             product.setDatasheetFilename(filename);
-            product.setDatasheetUrl("/uploads/" + filename);
+            product.setDatasheetUrl(UPLOADS_PATH_PREFIX + filename);
         } else {
             product.setDatasheetUrl(request.getDatasheetUrl());
         }
@@ -158,14 +159,14 @@ public class ProductService {
             }
             String filename = fileStorageService.storeFile(request.getDatasheetFile());
             product.setDatasheetFilename(filename);
-            product.setDatasheetUrl("/uploads/" + filename);
+            product.setDatasheetUrl(UPLOADS_PATH_PREFIX + filename);
         } else if (request.getDatasheetUrl() != null && !request.getDatasheetUrl().isBlank()) {
             if (product.getDatasheetFilename() != null) {
                 fileStorageService.deleteFile(product.getDatasheetFilename());
             }
             String filename = fileStorageService.fetchAndStore(request.getDatasheetUrl());
             product.setDatasheetFilename(filename);
-            product.setDatasheetUrl("/uploads/" + filename);
+            product.setDatasheetUrl(UPLOADS_PATH_PREFIX + filename);
         } else if (request.isClearDatasheet()) {
             if (product.getDatasheetFilename() != null) {
                 fileStorageService.deleteFile(product.getDatasheetFilename());
@@ -222,11 +223,11 @@ public class ProductService {
         } else if (file != null && !file.isEmpty()) {
             String filename = fileStorageService.storeFile(file);
             product.setDatasheetFilename(filename);
-            product.setDatasheetUrl("/uploads/" + filename);
+            product.setDatasheetUrl(UPLOADS_PATH_PREFIX + filename);
         } else if (url != null && !url.isBlank()) {
             String filename = fileStorageService.fetchAndStore(url);
             product.setDatasheetFilename(filename);
-            product.setDatasheetUrl("/uploads/" + filename);
+            product.setDatasheetUrl(UPLOADS_PATH_PREFIX + filename);
         }
 
         return toResponse(productRepository.save(product));
@@ -262,7 +263,7 @@ public class ProductService {
         response.setManufacturer(product.getManufacturer());
         response.setImageUrl(product.getImageUrl());
         if (product.getDatasheetFilename() != null) {
-            response.setDatasheetUrl("/uploads/" + product.getDatasheetFilename());
+            response.setDatasheetUrl(UPLOADS_PATH_PREFIX + product.getDatasheetFilename());
         } else {
             response.setDatasheetUrl(product.getDatasheetUrl());
         }

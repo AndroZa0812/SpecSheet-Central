@@ -2,9 +2,9 @@ package com.specsheetcentral.service;
 
 import com.specsheetcentral.model.Category;
 import com.specsheetcentral.repository.CategoryRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -22,15 +22,11 @@ class CategoryServiceTest {
     @Mock
     private CategoryRepository categoryRepository;
 
+    @InjectMocks
     private CategoryService categoryService;
 
-    @BeforeEach
-    void setUp() {
-        categoryService = new CategoryService(categoryRepository);
-    }
-
     @Test
-    void findAllShouldReturnAllCategories() {
+    void findAll_returnsAllCategories() {
         Category cat = new Category();
         cat.setId(1L);
         cat.setName("Sensors");
@@ -43,7 +39,7 @@ class CategoryServiceTest {
     }
 
     @Test
-    void findByIdShouldReturnCategory() {
+    void findById_existingId_returnsCategory() {
         Category cat = new Category();
         cat.setId(1L);
         cat.setName("Sensors");
@@ -55,7 +51,7 @@ class CategoryServiceTest {
     }
 
     @Test
-    void findByIdShouldThrowWhenNotFound() {
+    void findById_nonExistingId_throwsException() {
         when(categoryRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> categoryService.findById(99L))
@@ -64,7 +60,7 @@ class CategoryServiceTest {
     }
 
     @Test
-    void createShouldSaveCategory() {
+    void create_savesAndReturnsCategory() {
         Category cat = new Category();
         cat.setName("Displays");
         when(categoryRepository.save(any(Category.class))).thenAnswer(invocation -> {
@@ -80,7 +76,7 @@ class CategoryServiceTest {
     }
 
     @Test
-    void updateShouldModifyExistingCategory() {
+    void update_existingCategory_updatesName() {
         Category existing = new Category();
         existing.setId(1L);
         existing.setName("Old Name");
@@ -97,7 +93,7 @@ class CategoryServiceTest {
     }
 
     @Test
-    void deleteShouldRemoveCategory() {
+    void delete_callsRepositoryDelete() {
         doNothing().when(categoryRepository).deleteById(1L);
 
         categoryService.delete(1L);

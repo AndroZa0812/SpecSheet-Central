@@ -29,6 +29,7 @@ class FileStorageServiceTest {
     void setUp() {
         fileStorageService = new FileStorageService();
         ReflectionTestUtils.setField(fileStorageService, "uploadDir", tempDir.toString());
+        ReflectionTestUtils.setField(fileStorageService, "allowInternalUrls", true);
     }
 
     @Test
@@ -58,8 +59,7 @@ class FileStorageServiceTest {
 
         final String filename = fileStorageService.storeFile(file);
 
-        assertThat(filename).doesNotStartWith("/uploads/");
-        assertThat(filename).endsWith(".png");
+        assertThat(filename).doesNotStartWith("/uploads/").endsWith(".png");
         assertThat(tempDir.resolve(filename)).exists();
     }
 
@@ -108,7 +108,7 @@ class FileStorageServiceTest {
 
         assertThat(filename).doesNotContain("/");
         assertThat(tempDir.resolve(filename)).exists();
-        assertThat(tempDir.resolve(filename).getParent()).isEqualTo(tempDir);
+        assertThat(tempDir.resolve(filename)).hasParentRaw(tempDir);
     }
 
     @Test
@@ -204,6 +204,17 @@ class FileStorageServiceTest {
         assertThatThrownBy(() -> fileStorageService.fetchAndStore("ftp://example.com/file.pdf"))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("Only HTTP and HTTPS URLs are supported");
+    }
+
+    @Test
+    void fetchAndStore_shouldRejectInternalNetworkUrl() {
+        FileStorageService service = new FileStorageService();
+        ReflectionTestUtils.setField(service, "uploadDir", tempDir.toString());
+        ReflectionTestUtils.setField(service, "allowInternalUrls", false);
+
+        assertThatThrownBy(() -> service.fetchAndStore("http://127.0.0.1/test.pdf"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("URLs pointing to internal networks are not allowed");
     }
 
     @Test
