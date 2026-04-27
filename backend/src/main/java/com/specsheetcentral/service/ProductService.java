@@ -84,10 +84,19 @@ public class ProductService {
             .toList();
     }
 
+    @Transactional
     public ProductResponse findById(Long id) {
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException(PRODUCT_NOT_FOUND));
-        return toResponse(product);
+        
+        List<com.specsheetcentral.model.Review> reviews = reviewRepository.findByProductId(id);
+        int count = reviews.size();
+        Double avg = count > 0 ? reviews.stream().mapToInt(com.specsheetcentral.model.Review::getRating).average().orElse(0.0) : null;
+        
+        product.setRating(avg);
+        product.setReviewCount(count);
+        
+        return toResponse(productRepository.save(product));
     }
 
     @Transactional

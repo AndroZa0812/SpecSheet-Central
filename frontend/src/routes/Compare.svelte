@@ -17,6 +17,7 @@
     Search,
     ShoppingCart,
     Star,
+    StarHalf,
     Scale,
     AlertCircle,
   } from "lucide-svelte";
@@ -271,7 +272,7 @@
                       <Star class="size-3.5 fill-amber-400 text-amber-400" />
                     {/each}
                     {#if stars.hasHalf}
-                      <Star class="size-3.5 fill-amber-400 text-amber-400" />
+                      <StarHalf class="size-3.5 fill-amber-400 text-amber-400" />
                     {/if}
                     {#each { length: stars.empty } as _, i}
                       <Star class="size-3.5 text-muted-foreground" />

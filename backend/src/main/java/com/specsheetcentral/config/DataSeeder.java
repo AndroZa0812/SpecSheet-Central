@@ -6,6 +6,7 @@ import com.specsheetcentral.repository.ProductRepository;
 import com.specsheetcentral.repository.ProductSpecRepository;
 import com.specsheetcentral.repository.ReviewRepository;
 import com.specsheetcentral.repository.UserRepository;
+import com.specsheetcentral.service.ProductService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,7 +26,8 @@ public class DataSeeder {
                            ProductSpecRepository specs,
                            UserRepository users,
                            ReviewRepository reviews,
-                           PasswordEncoder encoder) {
+                           PasswordEncoder encoder,
+                           ProductService productService) {
         return args -> {
             if (categories.count() > 0) return;
 
@@ -295,6 +297,11 @@ public class DataSeeder {
                 r5.setComment("Best ESP32 dev board for the price.");
                 r5.setCreatedAt(LocalDateTime.now());
                 reviews.save(r5);
+
+                productService.recalculateProductRating(p1.getId());
+                productService.recalculateProductRating(p2.getId());
+                productService.recalculateProductRating(p3.getId());
+                productService.recalculateProductRating(p6.getId());
             } else {
                 log.info("SKIPPED user seeding: SEED_ADMIN_PASSWORD and SEED_USER_PASSWORD env vars not set");
             }

@@ -15,7 +15,7 @@
   import { Label } from "$lib/components/ui/label";
   import { Alert, AlertDescription } from "$lib/components/ui/alert";
   import { Avatar, AvatarFallback } from "$lib/components/ui/avatar";
-  import { Star, ArrowLeft, ShoppingCart, ExternalLink, Trash2, Loader2 } from "lucide-svelte";
+  import { Star, StarHalf, ArrowLeft, ShoppingCart, ExternalLink, Trash2, Loader2 } from "lucide-svelte";
   import { toast } from "svelte-sonner";
 
   let { params }: { params: RouteParams } = $props();
@@ -89,7 +89,7 @@
       newReviewComment = "";
       newReviewRating = 5;
       toast.success("Review added");
-      await fetchReviews(params.id);
+      await fetchProduct(params.id);
     } catch (err) {
       toast.error((err as any).response?.data?.message || "Failed to add review");
     } finally {
@@ -123,7 +123,7 @@
       newReviewComment = "";
       newReviewRating = 5;
       toast.success("Review updated");
-      await fetchReviews(params.id);
+      await fetchProduct(params.id);
     } catch (err) {
       toast.error((err as any).response?.data?.message || "Failed to update review");
     } finally {
@@ -135,7 +135,7 @@
     try {
       await deleteReview(reviewId);
       toast.success("Review deleted");
-      await fetchReviews(params.id);
+      await fetchProduct(params.id);
     } catch (err) {
       toast.error("Failed to delete review");
     }
@@ -203,10 +203,10 @@
             {#if product.rating != null && product.reviewCount > 0}
               {@const stars = renderStars(product.rating)}
               {#each { length: stars.full } as _, i}
-                <Star class="size-4 fill-primary text-primary" />
+                <Star class="size-4 fill-amber-400 text-amber-400" />
               {/each}
               {#if stars.hasHalf}
-                <Star class="size-4 fill-primary text-primary" />
+                <StarHalf class="size-4 fill-amber-400 text-amber-400" />
               {/if}
               {#each { length: stars.empty } as _, i}
                 <Star class="size-4 text-muted-foreground" />
@@ -350,7 +350,7 @@
                           <span class="text-sm font-medium">{review.userEmail || "Anonymous"}</span>
                           <div class="flex items-center gap-1">
                             {#each { length: review.rating || 0 } as _, i}
-                              <Star class="size-3 fill-primary text-primary" />
+                              <Star class="size-3 fill-amber-400 text-amber-400" />
                             {/each}
                           </div>
                         </div>

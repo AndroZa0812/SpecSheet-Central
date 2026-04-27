@@ -28,7 +28,7 @@
   let search = $state("");
   let selectedCategories: number[] = $state([]);
   let selectedManufacturers: string[] = $state([]);
-  let priceRange: number[] = $state([0, 1000]);
+  let priceRange: number[] = $state([0, 60]);
   let sheetOpen = $state(false);
 
   const manufacturers = $derived([...new Set(products.map((p) => p.manufacturer).filter(Boolean) as string[])].sort());
@@ -79,6 +79,20 @@
 
   let lastQuery = $state("");
 
+  $effect(() => {
+    // Track reactive dependencies to trigger re-fetch
+    search;
+    selectedCategories;
+    selectedManufacturers;
+    priceRange;
+
+    const timer = setTimeout(() => {
+      fetchProducts();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  });
+
   function applyUrlParams() {
     const qp = parseQueryParams();
     const queryKey = JSON.stringify(qp);
@@ -94,13 +108,11 @@
 
   onMount(() => {
     applyUrlParams();
-    fetchProducts();
+    // fetchProducts() is now handled by $effect
 
     // React to URL changes (client-side navigation)
     const unsub = currentPath.subscribe(() => {
-      if (applyUrlParams()) {
-        fetchProducts();
-      }
+      applyUrlParams();
     });
     return unsub;
   });
@@ -109,14 +121,12 @@
     selectedCategories = checked
       ? [...selectedCategories, catId]
       : selectedCategories.filter((id) => id !== catId);
-    fetchProducts();
   }
 
   function toggleManufacturer(mfr: string, checked: boolean) {
     selectedManufacturers = checked
       ? [...selectedManufacturers, mfr]
       : selectedManufacturers.filter((m) => m !== mfr);
-    fetchProducts();
   }
 </script>
 
@@ -126,7 +136,11 @@
       <Label>Search</Label>
       <div class="relative">
         <Search class="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input bind:value={search} oninput={fetchProducts} class="pl-9" placeholder="Search..." />
+        <Input 
+          bind:value={search} 
+          class="pl-9" 
+          placeholder="Search..." 
+        />
       </div>
     </div>
 
@@ -136,7 +150,13 @@
       <Label>Price Range</Label>
       <div class="flex items-center gap-2">
         <span class="text-sm text-muted-foreground">${priceRange[0]}</span>
-        <Slider bind:value={priceRange} min={0} max={1000} step={10} />
+        <Slider 
+          value={priceRange} 
+          onValueChange={(v) => { priceRange = v; }}
+          min={0} 
+          max={60} 
+          step={1} 
+        />
         <span class="text-sm text-muted-foreground">${priceRange[1]}</span>
       </div>
     </div>
