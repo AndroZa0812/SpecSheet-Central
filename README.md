@@ -49,6 +49,7 @@ docker run -d --name specsheet-postgres \
 #### Option B: Native Installation
 
 **Ubuntu/Debian:**
+
 ```bash
 sudo apt update
 sudo apt install postgresql postgresql-contrib
@@ -58,6 +59,7 @@ sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"
 ```
 
 **macOS (Homebrew):**
+
 ```bash
 brew install postgresql@15
 brew services start postgresql@15
@@ -65,12 +67,13 @@ createdb specsheet_central
 ```
 
 **Windows:**
+
 1. Download installer from [postgresql.org](https://www.postgresql.org/download/windows/)
 2. Run installer, set password to `postgres`
 3. Open pgAdmin or psql and create database `specsheet_central`
 
 > **Default connection:** `jdbc:postgresql://localhost:5432/specsheet_central` with username `postgres` / password `postgres`.
-> 
+>
 > To use different credentials, edit `backend/src/main/resources/application.properties`.
 
 ---
@@ -95,6 +98,7 @@ SEED_USER_PASSWORD=user123
 ```
 
 > The `.env` file is automatically picked up by Spring Boot. Alternatively, you can export variables directly:
+>
 > ```bash
 > export JWT_SECRET=$(openssl rand -base64 32)
 > export SEED_ADMIN_PASSWORD=admin123
@@ -115,12 +119,14 @@ mvn spring-boot:run
 The server starts on `http://localhost:8080`.
 
 On first startup with `SEED_ADMIN_PASSWORD` and `SEED_USER_PASSWORD` set, the app automatically seeds:
+
 - 4 product categories
 - 6 sample products
 - 1 admin account
 - 1 regular user account
 
 **Run tests:**
+
 ```bash
 cd backend
 mvn test
@@ -144,8 +150,8 @@ The app is available at `http://localhost:5173`.
 
 | Role  | Email                 | Password  |
 |-------|----------------------|-----------|
-| Admin | admin@specsheet.com  | admin123  |
-| User  | user@specsheet.com   | user123   |
+| Admin | <admin@specsheet.com>  | admin123  |
+| User  | <user@specsheet.com>   | user123   |
 
 > Change these via the `.env` file before first run, or update passwords in the admin panel.
 
@@ -154,6 +160,7 @@ The app is available at `http://localhost:5173`.
 ## API Endpoints
 
 ### Public & User Endpoints
+
 | Method | Path                | Auth | Description                 |
 |--------|---------------------|------|-----------------------------|
 | POST   | /api/auth/register  | -    | Register new user           |
@@ -165,6 +172,7 @@ The app is available at `http://localhost:5173`.
 | GET    | /api/orders/my      | USER | My orders                   |
 
 ### Admin Endpoints (RBAC protected)
+
 | Method | Path                                    | Description              |
 |--------|-----------------------------------------|--------------------------|
 | POST   | /api/admin/categories                   | Create category          |
@@ -206,19 +214,23 @@ specsheet-central/
 ## Common Issues
 
 **Port 8080 already in use:**
+
 ```bash
 # Kill process on port 8080, or change server.port in application.properties
 ```
 
 **Database connection failed:**
+
 - Ensure PostgreSQL is running: `sudo systemctl status postgresql`
 - Verify database `specsheet_central` exists
 - Check credentials in `backend/src/main/resources/application.properties`
 
 **JWT errors:**
+
 - Make sure `JWT_SECRET` is set in `.env` or exported as an environment variable
 
 **Frontend can't reach backend:**
+
 - Ensure the backend is running on port 8080
 - Check for CORS issues if running on different hosts
 
