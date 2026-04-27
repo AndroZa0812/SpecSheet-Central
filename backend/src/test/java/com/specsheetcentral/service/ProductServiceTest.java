@@ -66,6 +66,7 @@ class ProductServiceTest {
     void findById_existingProduct_returnsResponse() {
         Product product = createProduct();
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.save(any(Product.class))).thenReturn(product);
 
         ProductResponse result = productService.findById(1L);
 
